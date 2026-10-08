@@ -32,7 +32,10 @@ function renderHistoryDashboard() {
         <tbody>
           ${pagedSales.map((sale) => `
             <tr>
-              <td>${escapeHtml(sale.time || 'Date inconnue')}</td>
+              <td>${escapeHtml(sale.time || 'Date inconnue')}${
+                sale.failed ? ' <span class="sale-flag">refusée</span>'
+                  : sale.pending ? ' <span class="sale-flag">en attente d’envoi</span>'
+                    : sale.stockShortfall ? ' <span class="sale-flag">stock insuffisant</span>' : ''}</td>
               <td>${escapeHtml(sale.cashierName || 'Caissier inconnu')}</td>
               <td>${escapeHtml(sale.customer || 'Client général')}</td>
               <td>${escapeHtml(sale.paymentMethod || 'Espèces')}</td>

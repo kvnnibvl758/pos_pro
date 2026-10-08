@@ -31,6 +31,12 @@ export const state = {
     signupMode: false,
     sessionActive: false,
     businessId: null,
-    role: null
+    userId: null,
+    role: null,
+    // Hors connexion : `offline` = le réseau est (probablement) coupé ; `offlineSession` = la
+    // session a été ouverte depuis la copie locale, sans parler au serveur.
+    offline: false,
+    offlineSession: false,
+    syncMessage: ''
   }
 };

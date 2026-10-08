@@ -6,7 +6,7 @@ import { verifyPassword } from './crypto.js';
 import { getLockRemainingMs, registerFailedAttempt, clearFailedAttempts } from './loginSecurity.js';
 import { isCloudMode } from './supabaseClient.js';
 import { showAuthGate, hideAuthGate, updateSessionUI, clearPostSessionData, closeAllOverlays } from './ui.js';
-import { showCloudAuth, signOutCloud } from './cloudAuth.js';
+import { showCloudAuth, signOutCloud, confirmCloudLogout } from './cloudAuth.js';
 
 // Déconnexion complète. En mode cloud, la session Supabase est fermée (chaque personne
 // se connecte avec son propre compte) ; en mode local, on revient à l'écran d'accès.
@@ -49,7 +49,11 @@ export function initAuth() {
     el.loginModal.classList.add('hidden');
   });
 
-  el.logoutBtn.addEventListener('click', performLogout);
+  el.logoutBtn.addEventListener('click', () => {
+    // En mode cloud : prévenir si des ventes ne sont pas envoyées ou si on est hors connexion.
+    if (isCloudMode() && !confirmCloudLogout()) return;
+    performLogout();
+  });
 
   el.loginAgainBtn.addEventListener('click', () => {
     if (state.currentUser) return;

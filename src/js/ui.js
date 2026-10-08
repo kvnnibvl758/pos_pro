@@ -128,6 +128,12 @@ export function initInactivityTimeout() {
 
     timer = setTimeout(() => {
       if (!state.currentUser) return;
+      // Hors connexion, une déconnexion empêcherait de se reconnecter (il faut le réseau) et donc
+      // de vendre : on laisse la caisse ouverte et on reprend la surveillance au retour du réseau.
+      if (state.cloud.offline) {
+        scheduleLogout();
+        return;
+      }
       if (logoutHandler) logoutHandler();
       else {
         clearPostSessionData();

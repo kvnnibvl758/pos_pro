@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { el } from './elements.js';
 import { cloudConfig, cloudClient } from './supabaseClient.js';
 import * as cloudStore from './cloudStore.js';
+import * as offline from './offlineStore.js';
 import { showAuthGate, hideAuthGate, updateSessionUI, refreshAll } from './ui.js';
 import { renderBusinessIdentity, updateInventoryUI } from './settings.js';
 
@@ -74,6 +75,78 @@ function onRealtimeChange() {
   renderBusinessIdentity();
   updateInventoryUI();
   refreshAll();
+  cloudStore.saveSnapshot();
+}
+
+// Affiche l'application une fois la session (en ligne ou hors connexion) prête.
+function enterApp() {
+  hideCloudAuth();
+  el.businessSetupModal.classList.add('hidden');
+  hideAuthGate();
+  renderBusinessIdentity();
+  updateInventoryUI();
+  updateSessionUI();
+  refreshAll();
+  window.dispatchEvent(new CustomEvent('pos:session'));
+}
+
+// Ouvre la session depuis la copie locale (appareil sans réseau) : le rôle et le catalogue
+// viennent de la dernière connexion réussie. Rien n'est envoyé tant que le réseau est absent.
+async function startOfflineSession(snapshot) {
+  state.cloud.userId = snapshot.userId;
+  state.cloud.businessId = snapshot.businessId;
+  state.cloud.role = snapshot.role;
+  state.cloud.offline = true;
+  state.cloud.offlineSession = true;
+  state.cloud.sessionActive = true;
+  cloudStore.restoreFromSnapshot(snapshot);
+  state.currentUser = { ...snapshot.user };
+  enterApp();
+}
+
+// Appelée par la synchronisation quand le réseau revient : vérifie que la session est valide et,
+// si la session avait été ouverte hors connexion, recharge les données du serveur.
+// Renvoie false si la personne doit se reconnecter.
+export async function goOnline() {
+  if (!cloudClient || !state.currentUser?.cloud) return false;
+  const { data } = await cloudClient.auth.getSession();
+  if (!data.session || data.session.user.id !== state.cloud.userId) return false;
+
+  if (state.cloud.offlineSession) {
+    const memberships = await cloudStore.fetchMemberships(state.cloud.userId);
+    const membership = memberships.find((entry) => entry.business_id === state.cloud.businessId && entry.active);
+    if (!membership) {
+      await signOutCloud();
+      showCloudAuth();
+      setCloudAuthMessage('Ce compte a été désactivé par l’administrateur.', true);
+      return false;
+    }
+    state.cloud.role = membership.role;
+    state.currentUser.role = membership.role === 'owner' ? 'admin' : 'cashier';
+    state.currentUser.isPrimary = membership.role === 'owner';
+    await cloudStore.loadAll();
+    cloudStore.subscribeRealtime(onRealtimeChange);
+    state.cloud.offlineSession = false;
+    updateSessionUI();
+    onRealtimeChange();
+  }
+  return true;
+}
+
+// Avant une déconnexion volontaire : prévient si des ventes ne sont pas encore envoyées, ou si
+// l'appareil est hors connexion (on ne pourrait pas se reconnecter avant le retour du réseau).
+export function confirmCloudLogout() {
+  if (!state.currentUser?.cloud) return true;
+  const pending = cloudStore.pendingCount();
+  if (pending) {
+    return confirm(`${pending} vente(s) ne sont pas encore envoyées au serveur. Elles resteront sur cet appareil `
+      + 'et seront envoyées à la prochaine connexion de ce compte. Se déconnecter quand même ?');
+  }
+  if (state.cloud.offline) {
+    return confirm('Vous êtes hors connexion : il sera impossible de vous reconnecter avant le retour du réseau. '
+      + 'Se déconnecter quand même ?');
+  }
+  return true;
 }
 
 function resetSessionState() {
@@ -81,7 +154,11 @@ function resetSessionState() {
   state.currentUser = null;
   state.cloud.sessionActive = false;
   state.cloud.businessId = null;
+  state.cloud.userId = null;
   state.cloud.role = null;
+  state.cloud.offline = false;
+  state.cloud.offlineSession = false;
+  state.cloud.syncMessage = '';
   state.cart.length = 0;
   state.products.length = 0;
   state.customers.length = 0;
@@ -91,6 +168,8 @@ function resetSessionState() {
 
 function showSignedOutScreen() {
   resetSessionState();
+  offline.clearSnapshot();
+  window.dispatchEvent(new CustomEvent('pos:queue-changed'));
   el.cloudAuthForm.reset();
   updateSessionUI();
   refreshAll();
@@ -136,8 +215,11 @@ export async function applyCloudSession(session) {
       return;
     }
 
+    state.cloud.userId = session.user.id;
     state.cloud.businessId = membership.business_id;
     state.cloud.role = membership.role;
+    state.cloud.offline = false;
+    state.cloud.offlineSession = false;
     await cloudStore.loadAll();
 
     const user = session.user;
@@ -158,15 +240,18 @@ export async function applyCloudSession(session) {
     };
 
     cloudStore.subscribeRealtime(onRealtimeChange);
-    hideCloudAuth();
-    el.businessSetupModal.classList.add('hidden');
-    hideAuthGate();
-    renderBusinessIdentity();
-    updateInventoryUI();
-    updateSessionUI();
-    refreshAll();
+    cloudStore.saveSnapshot();
+    enterApp();
   } catch (error) {
     console.error('Ouverture de session impossible:', error);
+    // Réseau absent alors qu'une session valide existe : on ouvre la caisse depuis la copie locale.
+    if (cloudStore.isNetworkError(error)) {
+      const snapshot = await offline.loadSnapshot();
+      if (snapshot && snapshot.userId === session.user.id) {
+        await startOfflineSession(snapshot);
+        return;
+      }
+    }
     resetSessionState();
     showCloudAuth();
     setCloudAuthMessage(`Connexion impossible : ${error.message}`, true);
@@ -176,7 +261,16 @@ export async function applyCloudSession(session) {
 }
 
 export async function signOutCloud() {
-  if (cloudClient) await cloudClient.auth.signOut();
+  if (cloudClient) {
+    // Sans réseau, la fermeture « locale » suffit (le serveur ne peut pas être prévenu).
+    const localOnly = state.cloud.offline || state.cloud.offlineSession || navigator.onLine === false;
+    try {
+      const { error } = await cloudClient.auth.signOut(localOnly ? { scope: 'local' } : undefined);
+      if (error) await cloudClient.auth.signOut({ scope: 'local' });
+    } catch {
+      await cloudClient.auth.signOut({ scope: 'local' }).catch(() => {});
+    }
+  }
   showSignedOutScreen();
 }
 
@@ -213,7 +307,18 @@ export async function initializeCloudAuth() {
   });
 
   const { data, error } = await cloudClient.auth.getSession();
-  if (!error && data.session) await applyCloudSession(data.session);
+  if (!error && data.session) {
+    await applyCloudSession(data.session);
+    return;
+  }
+
+  // Pas de session lisible : si c'est parce que le réseau est absent (jeton à renouveler) et qu'une
+  // copie locale existe, on ouvre la caisse hors connexion plutôt que de bloquer les ventes.
+  const unreachable = navigator.onLine === false || cloudStore.isNetworkError(error);
+  if (unreachable) {
+    const snapshot = await offline.loadSnapshot();
+    if (snapshot) await startOfflineSession(snapshot);
+  }
 }
 
 async function signInWithCloud() {

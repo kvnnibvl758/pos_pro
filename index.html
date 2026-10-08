@@ -84,6 +84,14 @@
           </div>
         </header>
 
+        <div id="syncBanner" class="sync-banner hidden" role="status" aria-live="polite">
+          <span id="syncBannerText"></span>
+          <div class="backup-banner-actions">
+            <button id="syncRetryBtn" class="secondary-btn" type="button">Réessayer</button>
+            <button id="syncDetailsBtn" class="secondary-btn hidden" type="button">Détails</button>
+          </div>
+        </div>
+
         <div id="backupReminderBanner" class="backup-banner hidden">
           <span>Pensez à exporter une sauvegarde de vos données récentes (Paramètres → Données).</span>
           <div class="backup-banner-actions">

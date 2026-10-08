@@ -17,7 +17,10 @@ export function renderSalesHistory() {
   el.salesHistory.innerHTML = recentSales.map((sale) => `
     <div class="sale-item">
       <strong>${escapeHtml(sale.totalLabel)}</strong>
-      <small>${escapeHtml(sale.time)} · ${escapeHtml(sale.cashierName || 'Caissier')}</small>
+      <small>${escapeHtml(sale.time)} · ${escapeHtml(sale.cashierName || 'Caissier')}${
+        sale.failed ? '<span class="sale-flag">refusée</span>'
+          : sale.pending ? '<span class="sale-flag">en attente d’envoi</span>'
+            : sale.stockShortfall ? '<span class="sale-flag">stock insuffisant</span>' : ''}</small>
     </div>
   `).join('');
 }
@@ -55,7 +58,9 @@ export function initSales() {
     }
 
     printReceipt(receiptWindow);
-    alert(`Paiement enregistré : ${sale.totalLabel}`);
+    alert(sale.pending
+      ? `Vente enregistrée hors connexion : ${sale.totalLabel}\nElle sera envoyée automatiquement dès le retour du réseau.`
+      : `Paiement enregistré : ${sale.totalLabel}`);
     state.cart.length = 0;
     renderProducts(el.searchInput.value);
     renderCart();

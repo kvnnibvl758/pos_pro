@@ -9,7 +9,8 @@ import { renderUserManagementList, initUsers } from './users.js';
 import { initReports } from './reports.js';
 import { initNavigation, updateSessionUI, showAuthGate, initInactivityTimeout, setLogoutHandler } from './ui.js';
 import { initAuth, performLogout } from './auth.js';
-import { initCloudAuth, initializeCloudAuth } from './cloudAuth.js';
+import { initCloudAuth, initializeCloudAuth, goOnline } from './cloudAuth.js';
+import { initSync } from './sync.js';
 import { initTheme } from './theme.js';
 import { initCrossTabSync } from './crossTabSync.js';
 import { initPwa } from './pwa.js';
@@ -29,6 +30,7 @@ async function init() {
   initUsers();
   initAuth();
   initCloudAuth();
+  initSync({ goOnline });
 
   // 3. Premier rendu de l'interface.
   syncCustomerOptions();
