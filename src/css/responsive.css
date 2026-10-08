@@ -1,0 +1,225 @@
+/* ===== Repli pour navigateurs sans aspect-ratio (Safari < 15, ~2021) ===== */
+.product-thumb,
+.product-image {
+  height: 100px;
+}
+
+@supports (aspect-ratio: 1 / 1) {
+  .product-thumb,
+  .product-image {
+    height: auto;
+    aspect-ratio: 1.6 / 1;
+  }
+}
+
+/* ===== Zones tactiles plus grandes sur écran tactile ===== */
+@media (pointer: coarse) {
+  .nav-item {
+    padding: 12px 14px;
+    min-height: 44px;
+  }
+
+  .primary-btn,
+  .secondary-btn,
+  .logout-btn,
+  .chip,
+  .payment-btn,
+  .checkout-btn {
+    min-height: 40px;
+  }
+
+  .qty-box button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .close-btn,
+  .back-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ===== Grands écrans : eviter un panier trop etire ===== */
+@media (min-width: 1440px) {
+  .main-panel {
+    max-width: 1320px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+/* ===== Tablette large / petit ordinateur portable ===== */
+@media (max-width: 1080px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-panel {
+    position: static;
+  }
+}
+
+/* ===== Tablette / mobile large : sidebar horizontale ===== */
+@media (max-width: 860px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    gap: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .stats-box {
+    display: none;
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-shrink: 0;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .main-panel {
+    padding: 18px 16px 32px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 640px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .topbar-actions button {
+    flex: 1;
+    min-width: 130px;
+  }
+
+  .session-box {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-height: 100vh;
+    height: 100%;
+    border-radius: 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .modal {
+    padding: 0;
+  }
+
+  #dashboardContent {
+    overflow-x: auto;
+  }
+
+  .dashboard-table {
+    min-width: 560px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .settings-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+/* ===== Petits telephones ===== */
+@media (max-width: 420px) {
+  .form-row.two-cols {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-box h1 {
+    font-size: 14.5px;
+  }
+
+  .topbar h2 {
+    font-size: 18px;
+  }
+
+  .payment-options {
+    flex-wrap: wrap;
+  }
+
+  .payment-btn {
+    min-width: 45%;
+  }
+
+  .dashboard-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ===== Format paysage bas (telephone couche) ===== */
+@media (max-height: 480px) and (orientation: landscape) {
+  .auth-gate-card {
+    padding: 22px 26px;
+  }
+
+  .sidebar {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .main-panel {
+    padding-top: 14px;
+  }
+}
+
+/* ===== Empeche le zoom automatique iOS sur les champs de formulaire ===== */
+@media (max-width: 640px) {
+  input,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* ===== Accessibilite : respecter la reduction des animations ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f1117" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="src/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="src/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="POS Pro" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <title id="pageTitle">POS Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="src/css/main.css" />
+  </head>
+  <body>
+    <!-- Ecran d'acces affiche avant toute session -->
+    <section id="authGate" class="auth-gate hidden">
+      <div class="auth-gate-card">
+        <div class="auth-gate-logo" id="authGateLogo">POS</div>
+        <p class="eyebrow" id="authGateType">Boutique</p>
+        <h1 id="authGateName">POS Pro</h1>
+        <p class="auth-gate-message">Connectez-vous pour accéder à votre espace de caisse.</p>
+        <div class="auth-gate-actions">
+          <button id="authGateLoginBtn" type="button" class="primary-btn full-width">Se connecter</button>
+          <button id="authGateSignupBtn" type="button" class="secondary-btn full-width">Créer un compte</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== STRUCTURE PRINCIPALE DE L'APPLICATION ===== -->
+    <div class="app-shell hidden">
+      <!-- Barre laterale : navigation et resume de l'activite -->
+      <aside class="sidebar">
+        <div class="brand-box">
+          <div class="brand-icon" id="brandIcon">POS</div>
+          <div>
+            <p class="eyebrow" id="businessTypeLabel">Boutique</p>
+            <h1 id="brandName">POS Pro</h1>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-item active" data-section="vente">Vente</button>
+          <button class="nav-item" data-section="produits">Produits</button>
+          <button class="nav-item" data-section="clients">Clients</button>
+          <button class="nav-item" data-section="historique">Historique</button>
+          <button class="nav-item" data-section="rapports">Rapports</button>
+          <button class="nav-item" id="settingsNav" data-section="parametres">Paramètres</button>
+        </nav>
+
+        <div class="stats-box">
+          <h3>Résumé</h3>
+          <div class="stat-row">
+            <span>Mes ventes du jour</span>
+            <strong id="todaySales">0</strong>
+          </div>
+          <div class="stat-row inventory-only" id="lowStockStat">
+            <span>Stock faible</span>
+            <strong id="lowStockCount">0</strong>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <!-- En-tete : session utilisateur et actions rapides -->
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Caisse</p>
+            <h2>Nouvelle vente</h2>
+          </div>
+
+          <div class="topbar-actions">
+            <div class="session-box">
+              <span>Connecté :</span>
+              <strong id="sessionUser">Non connecté</strong>
+            </div>
+            <button class="secondary-btn hidden" id="installAppBtn" type="button">Installer l’application</button>
+            <button class="logout-btn" id="logoutBtn">Déconnexion</button>
+            <button class="primary-btn login-again-btn" id="loginAgainBtn" type="button">Se connecter</button>
+          </div>
+        </header>
+
+        <div id="backupReminderBanner" class="backup-banner hidden">
+          <span>Pensez à exporter une sauvegarde de vos données récentes (Paramètres → Données).</span>
+          <div class="backup-banner-actions">
+            <button id="backupBannerExportBtn" class="secondary-btn" type="button">Exporter maintenant</button>
+            <button id="backupBannerDismissBtn" class="close-btn" type="button" aria-label="Fermer le rappel">×</button>
+          </div>
+        </div>
+
+        <!-- Recherche et filtres du catalogue -->
+        <section class="toolbar">
+          <div class="search-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--muted-soft); flex-shrink: 0;">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input id="searchInput" type="text" placeholder="Rechercher un produit..." />
+          </div>
+          <div class="chip-group" id="categoryChips">
+            <button class="chip active" data-category="">Tout</button>
+            <button class="chip" data-category="Boissons">Boissons</button>
+            <button class="chip" data-category="Desserts">Desserts</button>
+            <button class="chip" data-category="Alimentaire">Alimentaire</button>
+          </div>
+        </section>
+
+        <!-- Zone de travail : catalogue des produits et panier -->
+        <section class="content-grid">
+          <div class="catalog-panel">
+            <div class="section-header">
+              <h3>Catalogue</h3>
+              <span id="productCount">0 produits</span>
+            </div>
+            <div id="productGrid" class="product-grid"></div>
+            <button id="loadMoreProductsBtn" class="secondary-btn full-width hidden" type="button">Afficher plus de produits</button>
+          </div>
+
+          <aside class="cart-panel">
+            <div class="section-header">
+              <h3>Panier</h3>
+              <button id="clearCartBtn" class="link-btn">Vider</button>
+            </div>
+
+            <div class="customer-select-box">
+              <label for="customerSelect">Client</label>
+              <select id="customerSelect">
+                <option value="">Client général</option>
+              </select>
+            </div>
+
+            <div id="cartItems" class="cart-items"></div>
+
+            <div class="sales-history-box">
+              <div class="section-header compact-header">
+                <h3>Historique</h3>
+              </div>
+              <div id="salesHistory" class="sales-history"></div>
+            </div>
+
+            <div class="totals-box">
+              <div class="totals-row">
+                <span>Sous-total</span>
+                <strong id="subtotal">0 FG</strong>
+              </div>
+              <div class="totals-row">
+                <span>Réduction</span>
+                <strong id="discount">0 FCFA</strong>
+              </div>
+              <div class="totals-row">
+                <span>TVA</span>
+                <strong id="tax">0 FCFA</strong>
+              </div>
+              <div class="totals-row total-row">
+                <span>Total</span>
+                <strong id="total">0 FCFA</strong>
+              </div>
+            </div>
+
+            <div class="payment-box">
+              <label>Mode de paiement</label>
+              <div class="payment-options" id="paymentOptions">
+                <button class="payment-btn active" data-payment="Espèces" type="button">Espèces</button>
+                <button class="payment-btn" data-payment="Carte" type="button">Carte</button>
+                <button class="payment-btn" data-payment="Mobile Money" type="button">Mobile</button>
+              </div>
+            </div>
+
+            <div class="checkout-actions">
+              <button id="checkoutBtn" class="checkout-btn">Payer maintenant</button>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <!-- ===== FENETRES DE CONNEXION ET DE GESTION ===== -->
+    <div id="loginModal" class="modal hidden">
+      <div class="modal-content login-modal">
+        <div class="modal-header center-header">
+          <h3>Connexion POS</h3>
+        </div>
+
+        <form id="loginForm" class="product-form">
+          <label>
+            Nom d’utilisateur
+            <input id="loginUser" type="text" placeholder="Utilisateur" maxlength="30" required />
+          </label>
+
+          <label>
+            Mot de passe
+            <input id="loginPassword" type="password" placeholder="Mot de passe" required />
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="primary-btn full-width">Se connecter</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="cloudAuthModal" class="modal hidden">
+      <div class="modal-content login-modal">
+        <div class="modal-header center-header">
+          <h3 id="cloudAuthTitle">Connexion</h3>
+          <button id="cloudAuthBackBtn" class="back-btn" type="button" aria-label="Retour à la connexion">←</button>
+        </div>
+        <form id="cloudAuthForm" class="product-form">
+          <label>
+            Email
+            <input id="cloudAuthEmail" type="email" placeholder="votre@email.com" required />
+          </label>
+          <label>
+            Mot de passe
+            <input id="cloudAuthPassword" type="password" placeholder="Mot de passe" minlength="6" />
+          </label>
+          <div id="cloudSignupFields" class="cloud-signup-fields">
+            <label>
+              Nom complet
+              <input id="cloudAuthName" type="text" placeholder="Votre nom complet" />
+            </label>
+            <label>
+              Numéro de téléphone
+              <input id="cloudAuthPhone" type="tel" placeholder="Ex : +224 620 000 000" />
+            </label>
+          </div>
+          <div id="cloudAuthMessage" class="cloud-auth-message"></div>
+          <div class="form-actions">
+            <button id="cloudAuthSubmitBtn" type="submit" class="primary-btn full-width">Se connecter</button>
+          </div>
+          <button id="cloudSignupBtn" type="button" class="secondary-btn full-width">Créer un compte</button>
+          <div class="divider-row">ou</div>
+          <div class="social-auth-actions">
+            <button id="googleAuthBtn" type="button" class="secondary-btn social-auth-btn">
+              <img class="social-auth-icon" src="https://cdn.simpleicons.org/google" alt="" aria-hidden="true" />
+              <span>Continuer avec Google</span>
+            </button>
+            <button id="appleAuthBtn" type="button" class="secondary-btn social-auth-btn">
+              <img class="social-auth-icon" src="https://cdn.simpleicons.org/apple/111827" alt="" aria-hidden="true" />
+              <span>Continuer avec Apple</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Creation du commerce (premiere connexion d'un proprietaire, mode cloud) -->
+    <div id="businessSetupModal" class="modal hidden">
+      <div class="modal-content login-modal">
+        <div class="modal-header center-header">
+          <h3>Créer votre commerce</h3>
+        </div>
+        <form id="businessSetupForm" class="product-form">
+          <p class="security-note">Dernière étape : donnez un nom à votre commerce. Vous en serez l’administrateur et pourrez ensuite ajouter vos caissiers.</p>
+          <label>
+            Nom du commerce
+            <input id="setupBusinessName" type="text" maxlength="60" placeholder="Ex: Boutique Fatou" required />
+          </label>
+          <label>
+            Type d’établissement
+            <input id="setupBusinessType" type="text" maxlength="40" value="Boutique" placeholder="Ex: Restaurant, Boutique, Café" required />
+          </label>
+          <label>
+            Votre nom
+            <input id="setupOwnerName" type="text" maxlength="60" placeholder="Votre nom complet" required />
+          </label>
+          <div class="form-actions">
+            <button type="button" id="setupCancelBtn" class="secondary-btn">Se déconnecter</button>
+            <button type="submit" class="primary-btn">Créer mon commerce</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Fenetre d'ajout et de modification d'un produit -->
+    <div id="productModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="productModalTitle">Ajouter un produit</h3>
+          <button id="closeModalBtn" class="close-btn" aria-label="Fermer">×</button>
+        </div>
+
+        <form id="addProductForm" class="product-form">
+          <div class="form-row two-cols">
+            <label>
+              Nom du produit
+              <input id="productName" name="productName" type="text" placeholder="Ex: Riz 5kg" maxlength="80" required />
+            </label>
+            <label>
+              Catégorie
+              <select id="productCategory" name="productCategory" required>
+                <option value="">Choisir une catégorie</option>
+                <option value="Boissons">Boissons</option>
+                <option value="Desserts">Desserts</option>
+                <option value="Alimentaire">Alimentaire</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="checkbox-field inventory-only" id="productTrackStockField">
+            <input id="productTrackStock" type="checkbox" checked />
+            <span>Suivre le stock pour ce produit (décoché = préparé à la demande, toujours disponible)</span>
+          </label>
+
+          <div class="form-row two-cols">
+            <label>
+              Prix (GNF)
+              <input id="productPrice" name="productPrice" type="number" min="1" step="1" placeholder="5000" required />
+            </label>
+            <label class="inventory-only" id="productStockField">
+              Stock
+              <input id="productStock" name="productStock" type="number" min="0" step="1" value="10" required />
+            </label>
+          </div>
+
+          <label>
+            Image du produit
+            <input id="productImage" name="productImage" type="file" accept="image/*" />
+          </label>
+
+          <div class="image-preview-box">
+            <span>Prévisualisation</span>
+            <img id="imagePreview" alt="Prévisualisation du produit" src="" />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="cancelProductBtn" class="secondary-btn">Annuler</button>
+            <button id="productSubmitBtn" type="submit" class="primary-btn">Enregistrer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Fenetre de gestion des clients -->
+    <div id="customerModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Gestion des clients</h3>
+          <button id="closeCustomerModalBtn" class="close-btn" aria-label="Fermer">×</button>
+        </div>
+
+        <form id="customerForm" class="product-form">
+          <div class="form-row two-cols">
+            <label>
+              Nom du client
+              <input id="customerName" type="text" placeholder="Ex: Mariam" maxlength="80" required />
+            </label>
+            <label>
+              Téléphone
+              <input id="customerPhone" type="tel" placeholder="Ex: +224 620 000 000" maxlength="30" />
+            </label>
+          </div>
+
+          <label>
+            Type
+            <select id="customerType">
+              <option value="particulier">Particulier</option>
+              <option value="entreprise">Entreprise</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button type="button" id="cancelCustomerBtn" class="secondary-btn">Fermer</button>
+            <button type="submit" class="primary-btn">Ajouter</button>
+          </div>
+        </form>
+
+        <div class="customer-list-box">
+          <h4>Liste des clients</h4>
+          <div id="customerList" class="customer-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fenetre des historiques et rapports -->
+    <div id="dashboardModal" class="modal hidden">
+      <div class="modal-content dashboard-modal">
+        <div class="modal-header">
+          <h3 id="dashboardTitle">Historique</h3>
+          <button id="closeDashboardBtn" class="close-btn" aria-label="Fermer">×</button>
+        </div>
+        <div id="dashboardContent" class="dashboard-content"></div>
+      </div>
+    </div>
+
+    <!-- Fenetre des parametres : entreprise, apparence, compte, caissiers, donnees -->
+    <div id="settingsModal" class="modal hidden">
+      <div class="modal-content dashboard-modal settings-modal">
+        <div class="modal-header">
+          <h3>Paramètres</h3>
+          <button id="closeSettingsBtn" class="close-btn" aria-label="Fermer">×</button>
+        </div>
+
+        <div class="settings-layout">
+          <nav class="settings-tabs" id="settingsTabs">
+            <button class="settings-tab active" data-tab="general" type="button">Entreprise</button>
+            <button class="settings-tab" data-tab="apparence" type="button">Apparence</button>
+            <button class="settings-tab" data-tab="compte" type="button">Mon compte</button>
+            <button class="settings-tab" data-tab="caissiers" id="settingsTabCaissiers" type="button">Caissiers</button>
+            <button class="settings-tab" data-tab="donnees" id="settingsTabDonnees" type="button">Données</button>
+          </nav>
+
+          <div class="settings-panels">
+            <!-- Entreprise -->
+            <section class="settings-panel active" data-panel="general">
+              <form id="settingsForm" class="product-form">
+                <label>
+                  Nom de l’entreprise
+                  <input id="businessNameInput" type="text" placeholder="Ex: Boutique Fatou" maxlength="60" required />
+                </label>
+                <label>
+                  Libellé de l’établissement
+                  <input id="businessTypeInput" type="text" placeholder="Ex: Restaurant, Boutique, Café" maxlength="40" required />
+                </label>
+                <div class="form-row two-cols">
+                  <label>
+                    Devise
+                    <select id="currencyInput" required>
+                      <option value="GNF">Franc guinéen (GNF)</option>
+                      <option value="XOF">Franc CFA (XOF)</option>
+                      <option value="EUR">Euro (EUR)</option>
+                      <option value="USD">Dollar US (USD)</option>
+                    </select>
+                  </label>
+                  <label>
+                    Taux de TVA (%)
+                    <input id="taxRateInput" type="number" min="0" max="100" step="0.5" value="0" required />
+                  </label>
+                </div>
+                <div class="form-row two-cols">
+                  <label>
+                    Gestion du stock
+                    <select id="inventoryModeInput" required>
+                      <option value="auto">Automatique selon le type</option>
+                      <option value="enabled">Activer le stock</option>
+                      <option value="disabled">Désactiver le stock</option>
+                    </select>
+                  </label>
+                  <label class="inventory-only" id="lowStockThresholdField">
+                    Seuil de stock faible
+                    <input id="lowStockThresholdInput" type="number" min="1" step="1" value="5" required />
+                  </label>
+                </div>
+                <label>
+                  Logo de l’entreprise
+                  <input id="businessLogoInput" type="file" accept="image/*" />
+                </label>
+                <div class="image-preview-box">
+                  <span>Aperçu du logo</span>
+                  <img id="businessLogoPreview" alt="Aperçu du logo" src="" />
+                </div>
+                <p class="security-note">Seul l’administrateur principal peut modifier ces informations.</p>
+                <div class="form-actions">
+                  <button type="submit" class="primary-btn">Enregistrer</button>
+                </div>
+              </form>
+            </section>
+
+            <!-- Apparence -->
+            <section class="settings-panel" data-panel="apparence">
+              <p class="eyebrow">Thème de l’interface</p>
+              <div class="theme-options" id="themeOptions">
+                <button class="theme-option" data-theme-choice="light" type="button">
+                  <span class="theme-swatch theme-swatch-light" aria-hidden="true"></span>
+                  Clair
+                </button>
+                <button class="theme-option" data-theme-choice="dark" type="button">
+                  <span class="theme-swatch theme-swatch-dark" aria-hidden="true"></span>
+                  Sombre
+                </button>
+                <button class="theme-option" data-theme-choice="system" type="button">
+                  <span class="theme-swatch theme-swatch-system" aria-hidden="true"></span>
+                  Système
+                </button>
+              </div>
+              <p class="security-note">« Système » suit automatiquement le réglage clair/sombre de votre appareil.</p>
+            </section>
+
+            <!-- Mon compte -->
+            <section class="settings-panel" data-panel="compte">
+              <div id="localAccountPanel">
+                <form id="passwordForm" class="product-form">
+                  <label>
+                    Mon identifiant
+                    <input id="accountUsernameInput" type="text" maxlength="30" required autocomplete="username" />
+                  </label>
+                  <label>
+                    Code actuel
+                    <input id="currentPasswordInput" type="password" required autocomplete="current-password" />
+                  </label>
+                  <label>
+                    Nouveau code (facultatif)
+                    <input id="newPasswordInput" type="password" minlength="8" autocomplete="new-password" />
+                  </label>
+                  <label>
+                    Confirmer le nouveau code
+                    <input id="confirmPasswordInput" type="password" minlength="8" autocomplete="new-password" />
+                  </label>
+                  <p class="security-note">8 caractères minimum, une majuscule, une minuscule et un chiffre.</p>
+                  <div class="form-actions">
+                    <button type="submit" class="primary-btn">Enregistrer</button>
+                  </div>
+                </form>
+              </div>
+              <div id="cloudAccountPanel" class="hidden">
+                <p class="security-note">Compte connecté avec Supabase (email, Google ou Apple).</p>
+                <button id="cloudProfileEditBtn" type="button" class="secondary-btn full-width">Modifier mon profil</button>
+              </div>
+            </section>
+
+            <!-- Caissiers -->
+            <section class="settings-panel" data-panel="caissiers">
+              <form id="userForm" class="product-form">
+                <label id="newUserEmailField" class="hidden">
+                  Email du caissier (il s’en servira pour se connecter)
+                  <input id="newUserEmail" type="email" placeholder="caissier@exemple.com" maxlength="120" />
+                </label>
+                <div class="form-row two-cols">
+                  <label>
+                    <span id="newUserNameLabel">Identifiant du caissier</span>
+                    <input id="newUserName" type="text" placeholder="Ex: kassia" maxlength="30" required />
+                  </label>
+                  <label>
+                    Mot de passe
+                    <input id="newUserPassword" type="password" placeholder="8 caractères, majuscule, minuscule et chiffre" minlength="8" required />
+                  </label>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="primary-btn">Ajouter le caissier</button>
+                </div>
+              </form>
+              <p class="security-note">Seul l’administrateur principal peut ajouter ou supprimer un caissier.</p>
+              <div class="customer-list-box">
+                <h4>Utilisateurs</h4>
+                <div id="userList" class="user-list"></div>
+              </div>
+            </section>
+
+            <!-- Donnees -->
+            <section class="settings-panel" data-panel="donnees">
+              <p class="eyebrow">Sauvegarde locale</p>
+              <p class="security-note">Télécharge un fichier JSON des produits, clients, ventes et de la configuration (hors comptes et mots de passe).</p>
+              <button type="button" id="exportBackupBtn" class="secondary-btn">Exporter une sauvegarde</button>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/config/supabase-config.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+  </body>
+</html>

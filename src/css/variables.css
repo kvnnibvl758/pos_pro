@@ -1,0 +1,77 @@
+:root {
+  /* Palette neutre, un seul accent */
+  --bg: #f2f3f5;
+  --surface: #ffffff;
+  --surface-muted: #f6f7f9;
+  --border: #e1e3e9;
+  --border-strong: #c9cdd6;
+
+  --ink: #0f1117;
+  --text: #171a22;
+  --muted: #5b6072;
+  --muted-soft: #8a8fa0;
+
+  --accent: #1f3a5f;
+  --accent-hover: #16293f;
+  --accent-soft: #e8edf3;
+  --accent-contrast: #ffffff;
+
+  --danger: #b3261e;
+  --danger-soft: #fbeae9;
+  --success: #1c7a4d;
+  --success-soft: #e7f4ec;
+  --warning: #9a5b00;
+  --warning-soft: #fbf1e1;
+
+  /* Rayons et ombres : discrets, pas de carte arrondie partout */
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 9px;
+  --shadow-sm: 0 1px 2px rgba(15, 17, 23, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 17, 23, 0.08);
+  --shadow-lg: 0 16px 34px rgba(15, 17, 23, 0.16);
+
+  /* Typographie */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+
+  /* Layout */
+  --sidebar-width: 248px;
+}
+
+/* ===== Theme sombre ===== */
+[data-theme="dark"] {
+  --bg: #0c0d12;
+  --surface: #15161d;
+  --surface-muted: #1b1d26;
+  --border: #282a35;
+  --border-strong: #383b49;
+
+  --ink: #1a1c24;
+  --text: #eef0f4;
+  --muted: #a1a6b8;
+  --muted-soft: #6f7385;
+
+  --accent: #5b8dd6;
+  --accent-hover: #79a3e2;
+  --accent-soft: #1e2c40;
+  --accent-contrast: #0c0d12;
+
+  --danger: #f0685f;
+  --danger-soft: #3a1f1f;
+  --success: #4fbd84;
+  --success-soft: #16301f;
+  --warning: #e3ab4f;
+  --warning-soft: #3a2c14;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 18px 38px rgba(0, 0, 0, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
