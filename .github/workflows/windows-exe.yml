@@ -1,0 +1,35 @@
+# Construit l'installateur Windows (POS-Pro-Installation.exe) sur un ordinateur Windows de GitHub.
+# Se lance tout seul à chaque envoi sur la branche « windows-exe », ou à la main (onglet Actions →
+# « Installateur Windows » → Run workflow). L'installateur est ensuite téléchargeable en bas de la
+# page de l'exécution, dans « Artifacts ».
+name: Installateur Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [windows-exe]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        run: npm ci --no-audit --no-fund
+      - name: Construire l'installateur
+        run: npm run dist
+      - name: Publier l'installateur
+        uses: actions/upload-artifact@v4
+        with:
+          name: POS-Pro-Installation
+          path: desktop/dist-exe/POS-Pro-Installation.exe
+          if-no-files-found: error

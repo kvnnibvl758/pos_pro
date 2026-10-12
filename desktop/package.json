@@ -1,0 +1,37 @@
+{
+  "name": "pos-pro-desktop",
+  "version": "1.0.0",
+  "description": "POS Pro — application Windows (ouvre le site POS dans sa propre fenêtre)",
+  "main": "main.js",
+  "private": true,
+  "author": "POS Pro",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.pospro.desktop",
+    "productName": "POS Pro",
+    "directories": { "output": "dist-exe", "buildResources": "." },
+    "files": ["main.js", "offline.html", "package.json"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "icon.png",
+      "artifactName": "POS-Pro-Installation.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "POS Pro",
+      "language": "1036"
+    }
+  }
+}
