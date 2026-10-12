@@ -83,7 +83,6 @@ export const el = {
   cloudAuthMessage: byId('cloudAuthMessage'),
   cloudSignupBtn: byId('cloudSignupBtn'),
   googleAuthBtn: byId('googleAuthBtn'),
-  appleAuthBtn: byId('appleAuthBtn'),
 
   // Mot de passe compte local
   passwordForm: byId('passwordForm'),

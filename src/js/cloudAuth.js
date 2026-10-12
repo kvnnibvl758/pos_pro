@@ -37,7 +37,6 @@ export function showCloudAuth() {
   el.cloudAuthBackBtn.style.display = 'none';
   el.cloudSignupBtn.style.display = '';
   el.googleAuthBtn.style.display = '';
-  el.appleAuthBtn.style.display = '';
   el.cloudSignupFields.classList.remove('visible');
   el.cloudAuthModal.classList.remove('hidden');
   el.loginModal.classList.add('hidden');
@@ -64,7 +63,6 @@ export function openProfileModal() {
   el.cloudAuthSubmitBtn.textContent = 'Enregistrer';
   el.cloudSignupBtn.style.display = 'none';
   el.googleAuthBtn.style.display = 'none';
-  el.appleAuthBtn.style.display = 'none';
   el.cloudAuthBackBtn.style.display = 'inline-flex';
   setCloudAuthMessage('Laissez le mot de passe vide pour le conserver.');
   el.cloudAuthModal.classList.remove('hidden');
@@ -370,7 +368,7 @@ async function signUpAccount() {
 async function signInWithProvider(provider) {
   try {
     const redirectTo = `${window.location.origin}${window.location.pathname}`;
-    setCloudAuthMessage(`Redirection vers ${provider === 'apple' ? 'Apple' : 'Google'}...`);
+    setCloudAuthMessage('Redirection vers Google...');
     const { error } = await cloudClient.auth.signInWithOAuth({ provider, options: { redirectTo } });
 
     if (error) {
@@ -444,11 +442,6 @@ export function initCloudAuth() {
 
   el.googleAuthBtn.addEventListener('click', () => {
     if (cloudClient) signInWithProvider('google');
-    else setCloudAuthMessage('Impossible de charger Supabase. Rechargez la page.', true);
-  });
-
-  el.appleAuthBtn.addEventListener('click', () => {
-    if (cloudClient) signInWithProvider('apple');
     else setCloudAuthMessage('Impossible de charger Supabase. Rechargez la page.', true);
   });
 
