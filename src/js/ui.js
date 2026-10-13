@@ -112,9 +112,9 @@ export function initNavigation() {
   });
 }
 
-// Deconnexion automatique apres inactivite : DESACTIVEE (0), pour que les caisses restent ouvertes en continu.
-// Pour la reactiver, mettre une duree en millisecondes (ex. 15 * 60 * 1000 = 15 minutes).
-const INACTIVITY_LIMIT_MS = 0;
+// Deconnexion automatique apres 8 heures sans aucune action (une journee de travail) : une caisse oubliee
+// finit par se fermer, sans gener le service. Mettre 0 pour la desactiver, ou une autre duree en millisecondes.
+const INACTIVITY_LIMIT_MS = 8 * 60 * 60 * 1000;
 
 // La déconnexion réelle (qui dépend du mode local/cloud) est fournie par auth.js au démarrage.
 let logoutHandler = null;
