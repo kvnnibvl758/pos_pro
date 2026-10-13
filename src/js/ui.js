@@ -112,9 +112,9 @@ export function initNavigation() {
   });
 }
 
-// Deconnecte automatiquement la session en cours apres une periode d'inactivite,
-// pour eviter qu'une caisse laissee sans surveillance reste ouverte.
-const INACTIVITY_LIMIT_MS = 15 * 60 * 1000;
+// Deconnexion automatique apres inactivite : DESACTIVEE (0), pour que les caisses restent ouvertes en continu.
+// Pour la reactiver, mettre une duree en millisecondes (ex. 15 * 60 * 1000 = 15 minutes).
+const INACTIVITY_LIMIT_MS = 0;
 
 // La déconnexion réelle (qui dépend du mode local/cloud) est fournie par auth.js au démarrage.
 let logoutHandler = null;
@@ -127,7 +127,7 @@ export function initInactivityTimeout() {
 
   function scheduleLogout() {
     clearTimeout(timer);
-    if (!state.currentUser) return;
+    if (!INACTIVITY_LIMIT_MS || !state.currentUser) return;
 
     timer = setTimeout(() => {
       if (!state.currentUser) return;
