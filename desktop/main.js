@@ -32,6 +32,9 @@ function appUrlFromDeepLink(link) {
     if (!hasLogin) return null;
     const target = new URL(APP_URL);
     target.search = parsed.search;
+    // Paramètre qui change à chaque fois : sans lui, si le site est déjà affiché, Electron ne ferait
+    // que changer le « # » de l'adresse (sans recharger la page) et la connexion ne serait pas lue.
+    target.searchParams.set('retour', String(Date.now()));
     target.hash = parsed.hash;
     return target.toString();
   } catch {
