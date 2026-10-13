@@ -17,10 +17,24 @@
   "build": {
     "appId": "com.pospro.desktop",
     "productName": "POS Pro",
-    "directories": { "output": "dist-exe", "buildResources": "." },
-    "files": ["main.js", "offline.html", "package.json"],
+    "directories": {
+      "output": "dist-exe",
+      "buildResources": "."
+    },
+    "files": [
+      "main.js",
+      "offline.html",
+      "package.json"
+    ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "icon.png",
       "artifactName": "POS-Pro-Installation.${ext}"
     },
@@ -32,6 +46,14 @@
       "createStartMenuShortcut": true,
       "shortcutName": "POS Pro",
       "language": "1036"
-    }
+    },
+    "protocols": [
+      {
+        "name": "POS Pro",
+        "schemes": [
+          "pospro"
+        ]
+      }
+    ]
   }
 }

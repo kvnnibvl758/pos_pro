@@ -7,7 +7,49 @@ const path = require('node:path');
 const APP_URL = 'https://pos-pro-dki5.netlify.app/';
 const APP_ORIGIN = new URL(APP_URL).origin;
 
+// Connexion Google : la page de Google ne peut pas s'afficher dans cette fenêtre (elle la refuse).
+// Elle s'ouvre donc dans le navigateur ; une fois connecté, le navigateur appelle l'adresse
+// « pospro://auth#... », Windows relance cette application, et la session est ouverte ici.
+const PROTOCOL = 'pospro';
+const USER_AGENT_MARK = 'POSProDesktop/1';
+
 let mainWindow = null;
+let pendingDeepLink = null;
+
+// Cherche un lien « pospro://... » dans les arguments de lancement.
+function findDeepLink(argv) {
+  return (argv || []).find((arg) => typeof arg === 'string' && arg.toLowerCase().startsWith(`${PROTOCOL}://`)) || null;
+}
+
+// Transforme le lien reçu en adresse de NOTRE site (jamais un autre site), en gardant seulement
+// les paramètres de connexion. Retourne null si le lien n'est pas une réponse de connexion.
+function appUrlFromDeepLink(link) {
+  try {
+    if (typeof link !== 'string' || link.length > 6000) return null;
+    const parsed = new URL(link);
+    if (parsed.protocol !== `${PROTOCOL}:` || parsed.hostname !== 'auth') return null;
+    const hasLogin = /(^|[#?&])(access_token|code|error)=/.test(`${parsed.search}${parsed.hash}`);
+    if (!hasLogin) return null;
+    const target = new URL(APP_URL);
+    target.search = parsed.search;
+    target.hash = parsed.hash;
+    return target.toString();
+  } catch {
+    return null;
+  }
+}
+
+function handleDeepLink(link) {
+  const target = appUrlFromDeepLink(link);
+  if (!target) return;
+  if (!mainWindow) {
+    pendingDeepLink = link;
+    return;
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
+  mainWindow.loadURL(target);
+}
 
 function isAppUrl(url) {
   try {
@@ -55,21 +97,39 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'offline.html'));
   });
 
-  mainWindow.loadURL(APP_URL);
+  // Le site reconnaît ainsi qu'il tourne dans l'application Windows (connexion Google adaptée).
+  mainWindow.webContents.setUserAgent(`${mainWindow.webContents.getUserAgent()} ${USER_AGENT_MARK}`);
+
+  const startUrl = appUrlFromDeepLink(pendingDeepLink) || APP_URL;
+  pendingDeepLink = null;
+  mainWindow.loadURL(startUrl);
 }
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_event, commandLine) => {
+    const link = findDeepLink(commandLine);
+    if (link) {
+      handleDeepLink(link);
+      return;
+    }
     if (!mainWindow) return;
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
   });
 
+  // Lancement de l'application par le lien de connexion (application fermée au retour du navigateur).
+  pendingDeepLink = findDeepLink(process.argv);
+
   app.whenReady().then(() => {
     app.setAppUserModelId('com.pospro.desktop');
+    if (process.defaultApp) {
+      if (process.argv.length >= 2) app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
+    } else {
+      app.setAsDefaultProtocolClient(PROTOCOL);
+    }
     Menu.setApplicationMenu(null);
 
     // Aucune autorisation (caméra, micro, localisation...) n'est accordée au site.
