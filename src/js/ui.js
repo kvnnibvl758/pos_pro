@@ -112,9 +112,9 @@ export function initNavigation() {
   });
 }
 
-// Deconnexion automatique apres 8 heures sans aucune action (une journee de travail) : une caisse oubliee
-// finit par se fermer, sans gener le service. Mettre 0 pour la desactiver, ou une autre duree en millisecondes.
-const INACTIVITY_LIMIT_MS = 8 * 60 * 60 * 1000;
+// Deconnexion automatique apres 1 heure sans aucune action : une caisse oubliee finit par se fermer.
+// Mettre 0 pour la desactiver, ou une autre duree en millisecondes.
+const INACTIVITY_LIMIT_MS = 60 * 60 * 1000;
 
 // La déconnexion réelle (qui dépend du mode local/cloud) est fournie par auth.js au démarrage.
 let logoutHandler = null;
