@@ -16,7 +16,10 @@ export const state = {
     currency: 'GNF',
     taxRate: 0,
     lowStockThreshold: 5,
-    logo: ''
+    logo: '',
+    // Abonnement (mode cloud) : fin de l'essai gratuit et fin de la période payée, en ISO.
+    trialEndsAt: null,
+    paidUntil: null
   },
 
   cart: [],
@@ -37,6 +40,8 @@ export const state = {
     // session a été ouverte depuis la copie locale, sans parler au serveur.
     offline: false,
     offlineSession: false,
-    syncMessage: ''
+    syncMessage: '',
+    // Administrateur de la plateforme (celui qui active les abonnements).
+    platformAdmin: false
   }
 };

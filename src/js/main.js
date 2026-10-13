@@ -11,6 +11,7 @@ import { initNavigation, updateSessionUI, showAuthGate, initInactivityTimeout, s
 import { initAuth, performLogout } from './auth.js';
 import { initCloudAuth, initializeCloudAuth, goOnline } from './cloudAuth.js';
 import { initSync } from './sync.js';
+import { initSubscription } from './subscription.js';
 import { initTheme } from './theme.js';
 import { initCrossTabSync } from './crossTabSync.js';
 import { initPwa } from './pwa.js';
@@ -31,6 +32,7 @@ async function init() {
   initAuth();
   initCloudAuth();
   initSync({ goOnline });
+  initSubscription();
 
   // 3. Premier rendu de l'interface.
   syncCustomerOptions();

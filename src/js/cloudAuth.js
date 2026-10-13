@@ -156,6 +156,7 @@ function resetSessionState() {
   state.cloud.role = null;
   state.cloud.offline = false;
   state.cloud.offlineSession = false;
+  state.cloud.platformAdmin = false;
   state.cloud.syncMessage = '';
   state.cart.length = 0;
   state.products.length = 0;
@@ -219,6 +220,7 @@ export async function applyCloudSession(session) {
     state.cloud.offline = false;
     state.cloud.offlineSession = false;
     await cloudStore.loadAll();
+    await cloudStore.checkPlatformAdmin();
 
     const user = session.user;
     const email = user.email || '';

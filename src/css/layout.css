@@ -429,3 +429,39 @@
 .checkout-actions {
   margin-top: 2px;
 }
+
+/* ===== Abonnement ===== */
+.subscription-banner:not(.is-error) {
+  background: var(--surface-muted);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.sub-status {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sub-status.sub-warn { border-color: var(--warning); color: var(--warning); background: var(--warning-soft); }
+.sub-status.sub-error { border-color: var(--danger); color: var(--danger); }
+
+.sub-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.sub-chip.sub-error { border-color: var(--danger); color: var(--danger); }
+.sub-chip.sub-ok { border-color: var(--success, var(--border)); color: var(--success, inherit); }
+
+#subPayLink { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+#adminBusinessList .user-item, #subPaymentList .user-item { gap: 12px; flex-wrap: wrap; }
+#adminBusinessList small, #subPaymentList small { display: block; color: var(--muted); }

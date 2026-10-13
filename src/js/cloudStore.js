@@ -6,6 +6,7 @@ import { cloudClient } from './supabaseClient.js';
 import { formatCurrency, getDateKey } from './utils.js';
 import { productTracksStock } from './permissions.js';
 import * as offline from './offlineStore.js';
+import { isSubscriptionBlocked, SUBSCRIPTION_EXPIRED_MESSAGE } from './subscriptionStatus.js';
 
 const SALES_LIMIT = 1000;
 
@@ -53,7 +54,9 @@ const configFromRow = (row) => ({
   currency: row.currency,
   taxRate: Number(row.tax_rate),
   lowStockThreshold: row.low_stock_threshold,
-  logo: row.logo || ''
+  logo: row.logo || '',
+  trialEndsAt: row.trial_ends_at || null,
+  paidUntil: row.paid_until || null
 });
 
 // ---------- Erreurs lisibles ----------
@@ -67,6 +70,9 @@ const ERROR_MESSAGES = {
   not_authenticated: 'Session expirée. Reconnectez-vous.',
   forbidden: 'Action non autorisée pour votre compte.',
   business_already_exists: 'Un commerce existe déjà pour ce compte.',
+  subscription_expired: SUBSCRIPTION_EXPIRED_MESSAGE,
+  invalid_months: 'Durée invalide (1 à 36 mois).',
+  unknown_business: 'Commerce introuvable.',
   invalid_name: 'Le nom du commerce est obligatoire.',
   PGRST202: 'Le serveur n’est pas à jour (mise à jour de la base manquante). Contactez l’administrateur.'
 };
@@ -75,7 +81,8 @@ const ERROR_MESSAGES = {
 // serveur indisponible, session à renouveler) est temporaire : la vente est alors gardée.
 const REJECTION_MESSAGES = new Set([
   'insufficient_stock', 'unknown_product', 'invalid_cart', 'invalid_quantity',
-  'invalid_payment_method', 'unknown_customer', 'forbidden', 'business_already_exists', 'invalid_name'
+  'invalid_payment_method', 'unknown_customer', 'forbidden', 'business_already_exists', 'invalid_name',
+  'subscription_expired'
 ]);
 const REJECTION_CODES = new Set(['42501', '22023', 'P0001', 'PGRST202']);
 
@@ -123,6 +130,15 @@ function upsertInState(list, item, atFront) {
 }
 
 const businessId = () => state.cloud.businessId;
+
+// Garde-fou côté écran (le serveur refuse de toute façon) : évite un aller-retour voué à l'échec.
+function assertOnline() {
+  if (state.cloud.offline) throw new Error('Connexion internet indisponible : le paiement en ligne nécessite le réseau.');
+}
+
+function assertSubscription() {
+  if (isSubscriptionBlocked()) throw new Error(SUBSCRIPTION_EXPIRED_MESSAGE);
+}
 
 
 // ---------- Ventes hors connexion : file d'attente ----------
@@ -287,6 +303,7 @@ export async function createBusiness({ name, typeLabel, displayName }) {
 
 // ---------- Produits ----------
 export async function saveProduct(data, id) {
+  assertSubscription();
   const row = {
     name: data.name,
     category: data.category,
@@ -304,6 +321,7 @@ export async function saveProduct(data, id) {
 }
 
 export async function removeProduct(id) {
+  assertSubscription();
   const deleted = unwrap(await cloudClient.from('products').delete().eq('id', id).select('id'));
   if (!deleted.length) throw new Error('Suppression non autorisée pour votre rôle.');
   const index = state.products.findIndex((product) => product.id === id);
@@ -312,6 +330,7 @@ export async function removeProduct(id) {
 
 // ---------- Clients ----------
 export async function saveCustomer(data) {
+  assertSubscription();
   const row = { name: data.name, phone: data.phone || '', type: data.type, business_id: businessId() };
   const saved = customerFromRow(unwrap(await cloudClient.from('customers').insert(row).select().single()));
   upsertInState(state.customers, saved, true);
@@ -319,6 +338,7 @@ export async function saveCustomer(data) {
 }
 
 export async function removeCustomer(id) {
+  assertSubscription();
   const deleted = unwrap(await cloudClient.from('customers').delete().eq('id', id).select('id'));
   if (!deleted.length) throw new Error('Suppression non autorisée pour votre rôle.');
   const index = state.customers.findIndex((customer) => customer.id === id);
@@ -344,6 +364,7 @@ export async function saveBusinessConfig() {
 // En ligne : une seule requête atomique côté serveur. Réseau coupé ou trop lent : la vente est
 // gardée sur l'appareil (file d'attente) et envoyée plus tard par flushQueue().
 export async function checkout({ paymentMethod, customerId }) {
+  assertSubscription();
   const items = state.cart.map((item) => ({ product_id: item.id, quantity: item.quantity }));
   const clientId = crypto.randomUUID();
   const soldAt = new Date();
@@ -582,4 +603,52 @@ export function unsubscribeRealtime() {
   pendingTables.clear();
   if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
   visibilityHandler = null;
+}
+
+// ---------- Abonnement ----------
+// Démarre le paiement en ligne : le serveur fixe le montant et renvoie l'adresse de la page de paiement.
+export async function startOnlinePayment({ payerNumber }) {
+  assertOnline();
+  const { data, error } = await cloudClient.functions.invoke('start-payment', {
+    body: {
+      business_id: businessId(),
+      payer_number: payerNumber,
+      return_url: `${window.location.origin}${window.location.pathname}`
+    }
+  });
+  if (error) throw await functionError(error);
+  if (data?.error) throw new Error(data.error);
+  if (!data?.redirect_url) throw new Error('Impossible d’ouvrir la page de paiement.');
+  return data.redirect_url;
+}
+
+export async function loadPayments() {
+  return unwrap(await cloudClient.from('subscription_payments').select('*')
+    .eq('business_id', businessId()).order('created_at', { ascending: false }).limit(50));
+}
+
+// Vrai seulement pour l'administrateur de la plateforme ; toute erreur (base pas à jour, réseau) = faux.
+export async function checkPlatformAdmin() {
+  try {
+    const { data, error } = await cloudClient.rpc('am_i_platform_admin');
+    state.cloud.platformAdmin = !error && data === true;
+  } catch {
+    state.cloud.platformAdmin = false;
+  }
+  return state.cloud.platformAdmin;
+}
+
+export async function adminListBusinesses() {
+  return unwrap(await cloudClient.rpc('admin_list_businesses'));
+}
+
+export async function adminExtendSubscription({ businessId: id, months, amount, currency, method, reference }) {
+  return unwrap(await cloudClient.rpc('admin_extend_subscription', {
+    p_business_id: id,
+    p_months: months,
+    p_amount: amount,
+    p_currency: currency,
+    p_method: method,
+    p_reference: reference
+  }));
 }

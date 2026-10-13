@@ -10,6 +10,7 @@ import { renderProducts } from './products.js';
 import { renderUserManagementList } from './users.js';
 import { openProfileModal } from './cloudAuth.js';
 import { recordBackupDone, dismissBackupReminderToday } from './backupReminder.js';
+import { renderSubscriptionPanel, renderAdminPanel } from './subscription.js';
 
 export function renderBusinessIdentity() {
   const safeName = escapeHtml(state.businessConfig.name);
@@ -46,6 +47,8 @@ export function updateInventoryUI() {
 }
 
 function switchSettingsTab(tabName) {
+  if (tabName === 'abonnement') renderSubscriptionPanel();
+  if (tabName === 'administration') renderAdminPanel();
   el.settingsTabs.querySelectorAll('.settings-tab').forEach((button) => {
     button.classList.toggle('active', button.dataset.tab === tabName);
   });
@@ -95,6 +98,10 @@ export function openSettingsModal() {
 
   // Onglet Données : réservé à l'administrateur principal.
   el.settingsTabDonnees.style.display = isAdmin ? '' : 'none';
+
+  // Onglet Abonnement : propriétaire en mode cloud. Onglet Administration : administrateur de la plateforme.
+  el.settingsTabAbonnement.style.display = isAdmin && isCloudMode() ? '' : 'none';
+  el.settingsTabAdministration.style.display = state.cloud.platformAdmin ? '' : 'none';
 
   switchSettingsTab('general');
   el.settingsModal.classList.remove('hidden');

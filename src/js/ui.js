@@ -10,6 +10,7 @@ import { openDashboard } from './reports.js';
 import { openProductModal } from './products.js';
 import { openSettingsModal } from './settings.js';
 import { shouldShowBackupReminder } from './backupReminder.js';
+import { renderSubscriptionBanner } from './subscription.js';
 
 export function refreshAll() {
   syncCustomerOptions();
@@ -17,6 +18,7 @@ export function refreshAll() {
   renderProducts(el.searchInput.value);
   renderCart();
   renderSalesHistory();
+  renderSubscriptionBanner();
 }
 
 export function showAuthGate() {
@@ -87,6 +89,7 @@ export function updateSessionUI() {
   if (el.settingsNav) el.settingsNav.style.display = state.currentUser ? 'block' : 'none';
 
   if (el.productGrid && el.searchInput) renderProducts(el.searchInput.value);
+  renderSubscriptionBanner();
 
   if (el.backupReminderBanner) {
     const showReminder = Boolean(state.currentUser) && canManageProducts() && shouldShowBackupReminder(state.salesHistory.length);
