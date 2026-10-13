@@ -369,8 +369,13 @@ async function signUpAccount() {
 
 async function signInWithProvider(provider) {
   try {
-    const redirectTo = `${window.location.origin}${window.location.pathname}`;
-    setCloudAuthMessage('Redirection vers Google...');
+    // Dans l'application Windows, la connexion Google se fait dans le navigateur : la page
+    // desktop-login.html renvoie ensuite vers l'application (lien pospro://). Sur le web, on revient ici.
+    const inDesktopApp = /POSProDesktop/.test(navigator.userAgent);
+    const redirectTo = inDesktopApp
+      ? `${window.location.origin}/desktop-login.html`
+      : `${window.location.origin}${window.location.pathname}`;
+    setCloudAuthMessage(inDesktopApp ? 'Connexion Google dans votre navigateur… revenez ensuite à cette fenêtre.' : 'Redirection vers Google...');
     const { error } = await cloudClient.auth.signInWithOAuth({ provider, options: { redirectTo } });
 
     if (error) {
