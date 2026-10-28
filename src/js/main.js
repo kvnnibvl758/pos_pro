@@ -17,6 +17,7 @@ import { initTheme } from './theme.js';
 import { initCrossTabSync } from './crossTabSync.js';
 import { initPwa } from './pwa.js';
 import { initPasswordToggles } from './passwordToggle.js';
+import { showLoading } from './loading.js';
 
 // Bouton « Actualiser » : recharge l'application pour récupérer la dernière version (utile dans l'application
 // Windows, qui n'a pas de bouton de rechargement). Les ventes hors connexion en attente restent sur l'appareil.
@@ -25,7 +26,9 @@ function initRefreshButton() {
   if (!button) return;
   button.addEventListener('click', () => {
     if (state.cart.length && !confirm('Le panier en cours sera vidé. Actualiser quand même ?')) return;
-    window.location.reload();
+    showLoading('Actualisation…');
+    // Petit délai pour que le rond s'affiche avant le rechargement.
+    setTimeout(() => window.location.reload(), 150);
   });
 }
 

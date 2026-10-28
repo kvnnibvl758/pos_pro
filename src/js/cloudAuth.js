@@ -1,6 +1,7 @@
 // ===== AUTHENTIFICATION CLOUD (SUPABASE) =====
 // Chaque personne (propriétaire ou caissier) se connecte avec son propre compte.
 // Son rôle vient de la table business_members, pas du navigateur.
+import { showLoading, hideLoading } from './loading.js';
 import { state } from './state.js';
 import { el } from './elements.js';
 import { cloudConfig, cloudClient } from './supabaseClient.js';
@@ -197,6 +198,7 @@ export async function applyCloudSession(session) {
   if (state.currentUser?.cloud && state.currentUser.id === session.user.id) return;
 
   applyingSession = true;
+  showLoading('Ouverture de votre session…');
   try {
     // Un évènement de connexion peut arriver en retard, après une déconnexion (ex. compte
     // désactivé) : on n'applique la session que si elle est toujours celle en cours.
@@ -261,6 +263,7 @@ export async function applyCloudSession(session) {
     setCloudAuthMessage(`Connexion impossible : ${error.message}`, true);
   } finally {
     applyingSession = false;
+    hideLoading();
   }
 }
 
@@ -326,10 +329,17 @@ export async function initializeCloudAuth() {
 }
 
 async function signInWithCloud() {
-  const { data, error } = await cloudClient.auth.signInWithPassword({
-    email: el.cloudAuthEmail.value.trim(),
-    password: el.cloudAuthPassword.value
-  });
+  showLoading('Connexion en cours…');
+  let data;
+  let error;
+  try {
+    ({ data, error } = await cloudClient.auth.signInWithPassword({
+      email: el.cloudAuthEmail.value.trim(),
+      password: el.cloudAuthPassword.value
+    }));
+  } finally {
+    hideLoading();
+  }
 
   if (error) {
     setCloudAuthMessage(friendlyAuthMessage(error.message), true);
@@ -353,11 +363,18 @@ async function signUpAccount() {
     return;
   }
 
-  const { data, error } = await cloudClient.auth.signUp({
-    email: el.cloudAuthEmail.value.trim(),
-    password: el.cloudAuthPassword.value,
-    options: { data: { full_name: fullName, phone } }
-  });
+  showLoading('Création du compte…');
+  let data;
+  let error;
+  try {
+    ({ data, error } = await cloudClient.auth.signUp({
+      email: el.cloudAuthEmail.value.trim(),
+      password: el.cloudAuthPassword.value,
+      options: { data: { full_name: fullName, phone } }
+    }));
+  } finally {
+    hideLoading();
+  }
 
   if (error) {
     setCloudAuthMessage(friendlyAuthMessage(error.message), true);
@@ -380,7 +397,13 @@ async function signInWithProvider(provider) {
       ? `${window.location.origin}/desktop-login.html`
       : `${window.location.origin}${window.location.pathname}`;
     setCloudAuthMessage(inDesktopApp ? 'Connexion Google dans votre navigateur… revenez ensuite à cette fenêtre.' : 'Redirection vers Google...');
-    const { error } = await cloudClient.auth.signInWithOAuth({ provider, options: { redirectTo } });
+    showLoading('Connexion avec Google…');
+    let error;
+    try {
+      ({ error } = await cloudClient.auth.signInWithOAuth({ provider, options: { redirectTo } }));
+    } finally {
+      hideLoading();
+    }
 
     if (error) {
       setCloudAuthMessage(`Connexion ${provider} impossible : ${error.message}`, true);
