@@ -118,9 +118,6 @@
           </div>
           <div class="chip-group" id="categoryChips">
             <button class="chip active" data-category="">Tout</button>
-            <button class="chip" data-category="Boissons">Boissons</button>
-            <button class="chip" data-category="Desserts">Desserts</button>
-            <button class="chip" data-category="Alimentaire">Alimentaire</button>
           </div>
         </section>
 
@@ -303,12 +300,8 @@
             </label>
             <label>
               Catégorie
-              <select id="productCategory" name="productCategory" required>
-                <option value="">Choisir une catégorie</option>
-                <option value="Boissons">Boissons</option>
-                <option value="Desserts">Desserts</option>
-                <option value="Alimentaire">Alimentaire</option>
-              </select>
+              <input id="productCategory" name="productCategory" type="text" list="productCategoryList" placeholder="Ex: Cosmétiques, Boissons..." maxlength="40" autocomplete="off" required />
+              <datalist id="productCategoryList"></datalist>
             </label>
           </div>
 

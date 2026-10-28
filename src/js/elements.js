@@ -105,6 +105,7 @@ export const el = {
   addProductForm: byId('addProductForm'),
   productName: byId('productName'),
   productCategory: byId('productCategory'),
+  productCategoryList: byId('productCategoryList'),
   productPrice: byId('productPrice'),
   productStock: byId('productStock'),
   productStockField: byId('productStockField'),

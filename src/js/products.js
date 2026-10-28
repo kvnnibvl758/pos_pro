@@ -10,24 +10,45 @@ const PRODUCTS_PAGE_SIZE = 60;
 let visibleProductCount = PRODUCTS_PAGE_SIZE;
 let lastFilterKey = '';
 
+// Suggestions proposées quand on tape une catégorie (la personne peut écrire n'importe quelle catégorie).
+const SUGGESTED_CATEGORIES = [
+  'Boissons', 'Alimentaire', 'Desserts',
+  'Cosmétiques', 'Soins du visage', 'Soins du corps', 'Maquillage', 'Parfums', 'Cheveux',
+  'Vêtements', 'Accessoires', 'Électronique'
+];
+
+function existingCategories() {
+  const seen = new Map();
+  state.products.forEach((product) => {
+    const name = String(product.category || '').trim();
+    if (name && !seen.has(name.toLowerCase())) seen.set(name.toLowerCase(), name);
+  });
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
 export function syncProductCategoryOptions() {
-  if (!el.productCategory) return;
+  if (!el.productCategoryList) return;
+  const existing = existingCategories();
+  const known = new Set(existing.map((name) => name.toLowerCase()));
+  const suggestions = [...existing, ...SUGGESTED_CATEGORIES.filter((name) => !known.has(name.toLowerCase()))];
+  el.productCategoryList.innerHTML = suggestions.map((category) => `<option value="${escapeHtml(category)}"></option>`).join('');
+}
 
-  const categories = [...new Set([
-    'Boissons',
-    'Desserts',
-    'Alimentaire',
-    ...state.products.map((product) => product.category).filter(Boolean)
-  ])];
-  const currentValue = el.productCategory.value;
-
-  el.productCategory.innerHTML = '<option value="">Choisir une catégorie</option>' + categories.map((category) => `
-    <option value="${escapeHtml(category)}">${escapeHtml(category)}</option>
+// Les puces de filtre suivent les catégories réellement utilisées par les produits.
+function renderCategoryChips() {
+  if (!el.categoryChips) return;
+  const categories = existingCategories();
+  if (state.activeCategory && !categories.some((name) => name.toLowerCase() === state.activeCategory.toLowerCase())) {
+    state.activeCategory = '';
+  }
+  const chips = [{ label: 'Tout', value: '' }, ...categories.map((name) => ({ label: name, value: name }))];
+  el.categoryChips.innerHTML = chips.map((chip) => `
+    <button class="chip${chip.value.toLowerCase() === (state.activeCategory || '').toLowerCase() ? ' active' : ''}" type="button" data-category="${escapeHtml(chip.value)}">${escapeHtml(chip.label)}</button>
   `).join('');
-  el.productCategory.value = currentValue;
 }
 
 export function renderProducts(filter = el.searchInput.value) {
+  renderCategoryChips();
   const filterKey = `${filter}|${state.activeCategory}`;
   if (filterKey !== lastFilterKey) {
     visibleProductCount = PRODUCTS_PAGE_SIZE;
@@ -189,13 +210,11 @@ export function initProducts() {
     renderProducts(el.searchInput.value);
   });
 
-  el.categoryChips.querySelectorAll('.chip[data-category]').forEach((button) => {
-    button.addEventListener('click', () => {
-      state.activeCategory = button.dataset.category || '';
-      el.categoryChips.querySelectorAll('.chip[data-category]').forEach((chip) => chip.classList.remove('active'));
-      button.classList.add('active');
-      renderProducts(el.searchInput.value);
-    });
+  el.categoryChips.addEventListener('click', (event) => {
+    const button = event.target.closest('.chip[data-category]');
+    if (!button) return;
+    state.activeCategory = button.dataset.category || '';
+    renderProducts(el.searchInput.value);
   });
 
   el.closeModalBtn.addEventListener('click', closeProductModal);
