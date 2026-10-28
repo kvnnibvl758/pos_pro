@@ -22,7 +22,11 @@ function friendlyAuthMessage(message) {
   if (/email not confirmed/i.test(message)) return 'Confirmez votre email (lien reçu par message) avant de vous connecter.';
   if (/user already registered/i.test(message)) return 'Un compte existe déjà avec cet email.';
   if (/password should be at least/i.test(message)) return 'Le mot de passe est trop court (6 caractères minimum).';
-  if (/rate limit/i.test(message)) return 'Trop de tentatives. Patientez quelques minutes.';
+  const seconds = /after (\d+) seconds/i.exec(message);
+  if (seconds) return `Trop de demandes. Réessayez dans ${seconds[1]} secondes.`;
+  if (/rate limit/i.test(message)) {
+    return 'Trop d’e-mails de confirmation ont été envoyés récemment. Réessayez dans environ 1 heure, ou demandez à l’administrateur d’activer votre compte.';
+  }
   return message;
 }
 
