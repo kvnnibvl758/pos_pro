@@ -18,17 +18,73 @@ export function setCloudAuthMessage(message, isError = false) {
   el.cloudAuthMessage.style.color = isError ? 'var(--danger)' : 'var(--muted)';
 }
 
+// Compte à rebours : le bouton reste grisé puis se réactive tout seul quand on peut réessayer.
+let cooldownTimer = 0;
+function startCooldown(seconds) {
+  const button = el.cloudAuthSubmitBtn;
+  if (!button) return;
+  clearInterval(cooldownTimer);
+  const label = button.dataset.label || button.textContent;
+  button.dataset.label = label;
+  let left = Math.max(1, Math.ceil(seconds));
+  button.disabled = true;
+  const tick = () => {
+    if (left <= 0) {
+      clearInterval(cooldownTimer);
+      button.disabled = false;
+      button.textContent = button.dataset.label;
+      delete button.dataset.label;
+      setCloudAuthMessage('Vous pouvez réessayer maintenant.', false);
+      return;
+    }
+    button.textContent = `Réessayer dans ${left} s`;
+    setCloudAuthMessage(`Trop de tentatives. Vous pourrez réessayer dans ${left} seconde${left > 1 ? 's' : ''}.`, true);
+    left -= 1;
+  };
+  tick();
+  cooldownTimer = setInterval(tick, 1000);
+}
+
+function stopCooldown() {
+  clearInterval(cooldownTimer);
+  if (el.cloudAuthSubmitBtn) {
+    el.cloudAuthSubmitBtn.disabled = false;
+    delete el.cloudAuthSubmitBtn.dataset.label;
+  }
+}
+
+function authErrorWaitSeconds(message) {
+  const seconds = /after (\d+) seconds?/i.exec(message);
+  if (seconds) return Number(seconds[1]);
+  if (/too many requests|request rate limit|over_request_rate_limit/i.test(message)) return 60;
+  return 0;
+}
+
 function friendlyAuthMessage(message) {
   if (/invalid login credentials/i.test(message)) return 'Email ou mot de passe incorrect.';
   if (/email not confirmed/i.test(message)) return 'Confirmez votre email (lien reçu par message) avant de vous connecter.';
   if (/user already registered/i.test(message)) return 'Un compte existe déjà avec cet email.';
   if (/password should be at least/i.test(message)) return 'Le mot de passe est trop court (6 caractères minimum).';
-  const seconds = /after (\d+) seconds/i.exec(message);
-  if (seconds) return `Trop de demandes. Réessayez dans ${seconds[1]} secondes.`;
-  if (/rate limit/i.test(message)) {
+  if (/email rate limit|over_email_send_rate_limit/i.test(message)) {
     return 'Trop d’e-mails de confirmation ont été envoyés récemment. Réessayez dans environ 1 heure, ou demandez à l’administrateur d’activer votre compte.';
   }
+  if (/error sending (confirmation|recovery|magic)/i.test(message)) return 'Impossible d’envoyer l’e-mail de confirmation pour le moment. Réessayez dans quelques minutes.';
+  if (/unable to validate email|invalid email|invalid format/i.test(message)) return 'Adresse e-mail invalide.';
+  if (/signups? not allowed|signup is disabled/i.test(message)) return 'La création de compte est désactivée.';
+  if (/weak password|password is known to be weak/i.test(message)) return 'Mot de passe trop simple. Choisissez-en un plus long et moins courant.';
+  if (/failed to fetch|network|load failed/i.test(message)) return 'Connexion internet indisponible. Vérifiez votre réseau puis réessayez.';
+  const wait = authErrorWaitSeconds(message);
+  if (wait) return `Trop de demandes. Réessayez dans ${wait} secondes.`;
+  if (/rate limit/i.test(message)) {
+    return 'Trop de demandes. Réessayez dans quelques minutes.';
+  }
   return message;
+}
+
+function reportAuthError(message) {
+  setCloudAuthMessage(friendlyAuthMessage(message), true);
+  const wait = authErrorWaitSeconds(message);
+  if (wait) startCooldown(wait);
 }
 
 export function showCloudAuth() {
@@ -38,6 +94,7 @@ export function showCloudAuth() {
   state.cloud.signupMode = false;
   el.cloudAuthTitle.textContent = 'Connexion';
   el.cloudAuthEmail.readOnly = false;
+  stopCooldown();
   el.cloudAuthSubmitBtn.textContent = 'Se connecter';
   el.cloudAuthBackBtn.style.display = 'none';
   el.cloudSignupBtn.style.display = '';
@@ -65,6 +122,7 @@ export function openProfileModal() {
   el.cloudAuthName.value = state.currentUser.fullName || '';
   el.cloudAuthPhone.value = state.currentUser.phone || '';
   el.cloudSignupFields.classList.add('visible');
+  stopCooldown();
   el.cloudAuthSubmitBtn.textContent = 'Enregistrer';
   el.cloudSignupBtn.style.display = 'none';
   el.googleAuthBtn.style.display = 'none';
@@ -342,7 +400,7 @@ async function signInWithCloud() {
   }
 
   if (error) {
-    setCloudAuthMessage(friendlyAuthMessage(error.message), true);
+    reportAuthError(error.message);
     return;
   }
   await applyCloudSession(data.session);
@@ -377,7 +435,7 @@ async function signUpAccount() {
   }
 
   if (error) {
-    setCloudAuthMessage(friendlyAuthMessage(error.message), true);
+    reportAuthError(error.message);
     return;
   }
 
@@ -468,6 +526,7 @@ export function initCloudAuth() {
     state.cloud.signupMode = true;
     el.cloudAuthTitle.textContent = 'Créer un compte';
     el.cloudSignupFields.classList.add('visible');
+    stopCooldown();
     el.cloudAuthSubmitBtn.textContent = 'Créer un compte';
     el.cloudSignupBtn.style.display = 'none';
     el.cloudAuthBackBtn.style.display = 'inline-flex';
