@@ -590,3 +590,12 @@
 .scan-feedback.hidden { display: none; }
 .scan-feedback.ok { background: #e6f6ec; color: #166534; }
 .scan-feedback.error { background: #fdecec; color: #991b1b; }
+
+/* Fenêtre « Confirmez votre e-mail » */
+.confirm-notice-overlay { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.55); }
+.confirm-notice-box { width: min(420px, 100%); background: var(--surface, #fff); color: var(--text, #1f2933); border-radius: 14px; padding: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); }
+.confirm-notice-box h2 { margin: 0 0 12px; font-size: 20px; }
+.confirm-notice-box p { margin: 0 0 8px; line-height: 1.5; }
+.confirm-notice-email { font-weight: 700; word-break: break-all; }
+.confirm-notice-box ol { margin: 12px 0 18px; padding-left: 20px; line-height: 1.7; }
+.confirm-notice-btn { width: 100%; padding: 12px; border: 0; border-radius: 8px; background: var(--primary, #1f6feb); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; }

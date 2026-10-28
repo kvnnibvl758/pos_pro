@@ -450,6 +450,44 @@ async function signUpAccount() {
     return;
   }
   setCloudAuthMessage('Compte créé. Confirmez votre email, puis connectez-vous.');
+  showConfirmEmailNotice(el.cloudAuthEmail.value.trim());
+}
+
+// Fenêtre bien visible après la création du compte : confirmer l'e-mail, puis se connecter.
+function showConfirmEmailNotice(email) {
+  document.getElementById('confirmEmailNotice')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'confirmEmailNotice';
+  overlay.className = 'confirm-notice-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const box = document.createElement('div');
+  box.className = 'confirm-notice-box';
+  const title = document.createElement('h2');
+  title.textContent = 'Confirmez votre e-mail';
+  const intro = document.createElement('p');
+  intro.textContent = 'Votre compte est créé. Un lien de confirmation a été envoyé à :';
+  const mail = document.createElement('p');
+  mail.className = 'confirm-notice-email';
+  mail.textContent = email;
+  const steps = document.createElement('ol');
+  ['Ouvrez votre boîte mail (regardez aussi dans les spams).', 'Cliquez sur le lien de confirmation.', 'Revenez ici et connectez-vous.']
+    .forEach((text) => { const li = document.createElement('li'); li.textContent = text; steps.appendChild(li); });
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'confirm-notice-btn';
+  button.textContent = 'J’ai confirmé, me connecter';
+  button.addEventListener('click', () => {
+    overlay.remove();
+    showCloudAuth();
+    el.cloudAuthEmail.value = email;
+    el.cloudAuthPassword.focus();
+  });
+  box.append(title, intro, mail, steps, button);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  button.focus();
 }
 
 async function signInWithProvider(provider) {
