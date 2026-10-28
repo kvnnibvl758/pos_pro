@@ -19,6 +19,7 @@ const productFromRow = (row) => ({
   stock: row.stock,
   trackStock: row.track_stock,
   image: row.image || '',
+  barcode: row.barcode || '',
   emoji: ''
 });
 
@@ -313,7 +314,8 @@ export async function saveProduct(data, id) {
     price: data.price,
     stock: data.stock,
     track_stock: data.trackStock,
-    image: data.image || ''
+    image: data.image || '',
+    barcode: data.barcode || ''
   };
   const query = id
     ? cloudClient.from('products').update(row).eq('id', id)

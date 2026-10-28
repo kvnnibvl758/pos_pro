@@ -5,6 +5,7 @@ import { formatCurrency, escapeHtml, validateImageFile } from './utils.js';
 import { canManageProducts, isInventoryEnabled, productTracksStock } from './permissions.js';
 import * as store from './store.js';
 import { addToCart } from './cart.js';
+import { scanBarcodeWithCamera, lookupProductByBarcode, cleanBarcode } from './barcode.js';
 
 const PRODUCTS_PAGE_SIZE = 60;
 let visibleProductCount = PRODUCTS_PAGE_SIZE;
@@ -57,6 +58,7 @@ export function renderProducts(filter = el.searchInput.value) {
 
   const filtered = state.products.filter((product) =>
     (product.name.toLowerCase().includes(filter.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(filter.trim())) ||
       product.category.toLowerCase().includes(filter.toLowerCase())) &&
     (!state.activeCategory || product.category.toLowerCase() === state.activeCategory.toLowerCase())
   );
@@ -172,6 +174,7 @@ export function openProductModal(productId = null) {
     if (!product) return;
 
     el.productName.value = product.name;
+    el.productBarcode.value = product.barcode || '';
     el.productCategory.value = product.category;
     el.productPrice.value = product.price;
     el.productTrackStock.checked = product.trackStock !== false;
@@ -192,7 +195,40 @@ export function openProductModal(productId = null) {
   el.productModal.classList.remove('hidden');
 }
 
+const BARCODE_HINT = 'Avec un lecteur USB : cliquez dans ce champ puis scannez.';
+const setBarcodeStatus = (text) => { if (el.barcodeStatus) el.barcodeStatus.textContent = text; };
+
+// Après un scan (ou une saisie) : détecte un doublon, puis reconnaît le produit et remplit les champs vides.
+async function handleBarcode(rawCode) {
+  const code = cleanBarcode(rawCode);
+  el.productBarcode.value = code;
+  if (!code) { setBarcodeStatus(BARCODE_HINT); return; }
+
+  const duplicate = state.products.find((product) => product.barcode === code && product.id !== state.editingProductId);
+  if (duplicate) {
+    setBarcodeStatus(`Ce code est déjà utilisé par « ${duplicate.name} ». Modifiez ce produit au lieu d’en créer un second.`);
+    return;
+  }
+
+  setBarcodeStatus('Recherche du produit…');
+  const found = await lookupProductByBarcode(code);
+  if (cleanBarcode(el.productBarcode.value) !== code) return; // le code a changé entre-temps
+  if (!found) {
+    setBarcodeStatus('Produit non reconnu : remplissez les informations, le code sera retenu pour les prochains scans.');
+    return;
+  }
+  if (!el.productName.value.trim() && found.name) el.productName.value = found.name;
+  if (!el.productCategory.value.trim() && found.category) el.productCategory.value = found.category;
+  if (found.image && !el.imagePreview.classList.contains('visible')) {
+    el.imagePreview.src = found.image;
+    el.imagePreview.classList.add('visible');
+  }
+  setBarcodeStatus('Produit reconnu : vérifiez les informations, puis indiquez le prix.');
+  if (!el.productPrice.value) el.productPrice.focus();
+}
+
 export function closeProductModal() {
+  setBarcodeStatus(BARCODE_HINT);
   el.productModal.classList.add('hidden');
   state.editingProductId = null;
   el.addProductForm.reset();
@@ -204,6 +240,18 @@ export function closeProductModal() {
 
 export function initProducts() {
   el.searchInput.addEventListener('input', (event) => renderProducts(event.target.value));
+  // Lecteur de codes-barres USB à la caisse : le code tapé puis Entrée ajoute directement le produit au panier.
+  el.searchInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    const code = cleanBarcode(el.searchInput.value);
+    if (!code) return;
+    const match = state.products.find((product) => product.barcode && product.barcode === code);
+    event.preventDefault();
+    if (!match) return;
+    addToCart(match.id);
+    el.searchInput.value = '';
+    renderProducts('');
+  });
 
   el.loadMoreProductsBtn.addEventListener('click', () => {
     visibleProductCount += PRODUCTS_PAGE_SIZE;
@@ -216,6 +264,25 @@ export function initProducts() {
     state.activeCategory = button.dataset.category || '';
     renderProducts(el.searchInput.value);
   });
+
+  // Code-barres : bouton caméra, lecteur USB (le lecteur « tape » le code puis Entrée) et saisie manuelle.
+  el.scanBarcodeBtn.addEventListener('click', async () => {
+    el.scanBarcodeBtn.disabled = true;
+    try {
+      const code = await scanBarcodeWithCamera();
+      if (code) await handleBarcode(code);
+    } catch (error) {
+      setBarcodeStatus(error.message);
+    } finally {
+      el.scanBarcodeBtn.disabled = false;
+    }
+  });
+  el.productBarcode.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault(); // le lecteur USB envoie Entrée : on ne doit pas valider le formulaire
+    handleBarcode(el.productBarcode.value);
+  });
+  el.productBarcode.addEventListener('change', () => handleBarcode(el.productBarcode.value));
 
   el.closeModalBtn.addEventListener('click', closeProductModal);
   el.cancelProductBtn.addEventListener('click', closeProductModal);
@@ -277,6 +344,7 @@ export function initProducts() {
       trackStock,
       stock: stock > 0 ? stock : 0,
       emoji: existingProduct?.emoji || '',
+      barcode: cleanBarcode(formData.get('productBarcode')),
       image: el.imagePreview.src && el.imagePreview.classList.contains('visible') ? el.imagePreview.src : ''
     };
 

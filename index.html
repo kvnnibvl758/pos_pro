@@ -301,6 +301,14 @@
         </div>
 
         <form id="addProductForm" class="product-form">
+          <label class="barcode-field">
+            Code-barres (facultatif)
+            <span class="barcode-row">
+              <input id="productBarcode" name="productBarcode" type="text" inputmode="numeric" placeholder="Scannez ou tapez le code" maxlength="32" autocomplete="off" />
+              <button id="scanBarcodeBtn" class="secondary-btn" type="button">📷 Scanner</button>
+            </span>
+            <small id="barcodeStatus" class="barcode-status" role="status" aria-live="polite">Avec un lecteur USB : cliquez dans ce champ puis scannez.</small>
+          </label>
           <div class="form-row two-cols">
             <label>
               Nom du produit

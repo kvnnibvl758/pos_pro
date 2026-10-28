@@ -529,3 +529,57 @@
 @media (prefers-reduced-motion: reduce) {
   .loading-spinner { animation-duration: 2s; }
 }
+
+/* Code-barres et scanner */
+.barcode-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+.barcode-row input {
+  flex: 1;
+  min-width: 0;
+}
+.barcode-status {
+  display: block;
+  margin-top: 4px;
+  opacity: 0.8;
+  font-weight: 400;
+}
+.scanner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.7);
+}
+.scanner-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 420px);
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  color: var(--text, #111827);
+  text-align: center;
+}
+.scanner-title {
+  margin: 0;
+  font-weight: 700;
+}
+.scanner-reader {
+  width: 100%;
+  min-height: 220px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #000;
+}
+.scanner-hint {
+  margin: 0;
+  opacity: 0.8;
+}
