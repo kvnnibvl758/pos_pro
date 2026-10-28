@@ -147,6 +147,7 @@ export function printReceipt(preopenedWindow = null) {
       </head>
       <body>
         <h2>${escapeHtml(state.businessConfig.name)}</h2>
+        ${state.businessConfig.phone ? `<p style="text-align:center; margin:-12px 0 16px;">Tél / WhatsApp : <strong>${escapeHtml(state.businessConfig.phone)}</strong></p>` : ''}
         <div class="line"><span>Client</span><strong>${escapeHtml(customerLabel)}</strong></div>
         <div class="line"><span>Caissier</span><strong>${escapeHtml(state.currentUser ? state.currentUser.username : 'Agent')}</strong></div>
         <div class="line"><span>Paiement</span><strong>${escapeHtml(state.selectedPaymentMethod)}</strong></div>

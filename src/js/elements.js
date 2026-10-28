@@ -167,6 +167,7 @@ export const el = {
   settingsForm: byId('settingsForm'),
   businessNameInput: byId('businessNameInput'),
   businessTypeInput: byId('businessTypeInput'),
+  businessPhoneInput: byId('businessPhoneInput'),
   currencyInput: byId('currencyInput'),
   taxRateInput: byId('taxRateInput'),
   inventoryModeInput: byId('inventoryModeInput'),

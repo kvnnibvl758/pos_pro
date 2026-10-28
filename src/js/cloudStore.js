@@ -51,6 +51,7 @@ function saleFromRow(row) {
 const configFromRow = (row) => ({
   name: row.name,
   typeLabel: row.type_label,
+  phone: row.phone || '',
   inventoryMode: row.inventory_mode,
   currency: row.currency,
   taxRate: Number(row.tax_rate),
@@ -353,6 +354,7 @@ export async function saveBusinessConfig() {
   const updated = unwrap(await cloudClient.from('businesses').update({
     name: config.name,
     type_label: config.typeLabel,
+    phone: String(config.phone || '').trim().slice(0, 30),
     inventory_mode: config.inventoryMode,
     currency: config.currency,
     tax_rate: config.taxRate,

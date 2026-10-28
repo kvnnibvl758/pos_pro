@@ -67,6 +67,7 @@ export function openSettingsModal() {
   if (settingsSubmitBtn) settingsSubmitBtn.disabled = !isAdmin;
   el.businessNameInput.value = state.businessConfig.name;
   el.businessTypeInput.value = state.businessConfig.typeLabel || 'Boutique';
+  if (el.businessPhoneInput) el.businessPhoneInput.value = state.businessConfig.phone || '';
   el.currencyInput.value = state.businessConfig.currency || 'GNF';
   el.taxRateInput.value = state.businessConfig.taxRate ?? 0;
   el.inventoryModeInput.value = state.businessConfig.inventoryMode;
@@ -189,6 +190,7 @@ export function initSettings() {
 
     state.businessConfig.name = name;
     state.businessConfig.typeLabel = typeLabel;
+    state.businessConfig.phone = el.businessPhoneInput ? el.businessPhoneInput.value.trim().slice(0, 30) : (state.businessConfig.phone || '');
     state.businessConfig.currency = el.currencyInput.value;
     state.businessConfig.taxRate = Number.isFinite(taxRate) && taxRate >= 0 ? taxRate : 0;
     state.businessConfig.inventoryMode = el.inventoryModeInput.value;

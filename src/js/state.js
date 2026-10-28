@@ -12,6 +12,7 @@ export const state = {
   businessConfig: {
     name: 'POS Pro',
     typeLabel: 'Boutique',
+    phone: '',
     inventoryMode: 'auto',
     currency: 'GNF',
     taxRate: 0,
