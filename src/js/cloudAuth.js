@@ -428,7 +428,13 @@ async function signUpAccount() {
     ({ data, error } = await cloudClient.auth.signUp({
       email: el.cloudAuthEmail.value.trim(),
       password: el.cloudAuthPassword.value,
-      options: { data: { full_name: fullName, phone } }
+      options: {
+        data: { full_name: fullName, phone },
+        // Dans l'application Windows, le lien de confirmation renvoie vers l'application (pospro://) au lieu de rester dans le navigateur.
+        emailRedirectTo: /POSProDesktop/.test(navigator.userAgent)
+          ? `${window.location.origin}/desktop-login.html`
+          : `${window.location.origin}${window.location.pathname}`
+      }
     }));
   } finally {
     hideLoading();
