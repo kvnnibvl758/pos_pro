@@ -1,5 +1,6 @@
 // ===== POINT D'ENTREE DE L'APPLICATION =====
 import { loadInitialState } from './storage.js';
+import { state } from './state.js';
 import { renderBusinessIdentity, updateInventoryUI, initSettings } from './settings.js';
 import { syncCustomerOptions, renderCustomers, initCustomers } from './customers.js';
 import { renderProducts, initProducts } from './products.js';
@@ -16,6 +17,17 @@ import { initTheme } from './theme.js';
 import { initCrossTabSync } from './crossTabSync.js';
 import { initPwa } from './pwa.js';
 import { initPasswordToggles } from './passwordToggle.js';
+
+// Bouton « Actualiser » : recharge l'application pour récupérer la dernière version (utile dans l'application
+// Windows, qui n'a pas de bouton de rechargement). Les ventes hors connexion en attente restent sur l'appareil.
+function initRefreshButton() {
+  const button = document.getElementById('refreshAppBtn');
+  if (!button) return;
+  button.addEventListener('click', () => {
+    if (state.cart.length && !confirm('Le panier en cours sera vidé. Actualiser quand même ?')) return;
+    window.location.reload();
+  });
+}
 
 async function init() {
   // 1. Charger toutes les données (localStorage) dans l'état partagé.
@@ -35,6 +47,7 @@ async function init() {
   initSync({ goOnline });
   initSubscription();
   initPasswordToggles();
+  initRefreshButton();
 
   // 3. Premier rendu de l'interface.
   syncCustomerOptions();
