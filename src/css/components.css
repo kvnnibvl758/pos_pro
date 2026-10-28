@@ -429,3 +429,36 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
 }
+
+/* Bouton « œil » des champs mot de passe */
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field input {
+  width: 100%;
+  padding-right: 44px;
+  box-sizing: border-box;
+}
+.password-eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.65;
+  cursor: pointer;
+}
+.password-eye:hover,
+.password-eye:focus-visible {
+  opacity: 1;
+}

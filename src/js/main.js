@@ -15,6 +15,7 @@ import { initSubscription } from './subscription.js';
 import { initTheme } from './theme.js';
 import { initCrossTabSync } from './crossTabSync.js';
 import { initPwa } from './pwa.js';
+import { initPasswordToggles } from './passwordToggle.js';
 
 async function init() {
   // 1. Charger toutes les données (localStorage) dans l'état partagé.
@@ -33,6 +34,7 @@ async function init() {
   initCloudAuth();
   initSync({ goOnline });
   initSubscription();
+  initPasswordToggles();
 
   // 3. Premier rendu de l'interface.
   syncCustomerOptions();
