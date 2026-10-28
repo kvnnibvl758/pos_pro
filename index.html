@@ -159,9 +159,16 @@
                 <span>Sous-total</span>
                 <strong id="subtotal">0 FG</strong>
               </div>
-              <div class="totals-row">
+              <div class="totals-row discount-row">
                 <span>Réduction</span>
-                <strong id="discount">0 FCFA</strong>
+                <div class="discount-controls">
+                  <input id="discountValue" type="number" inputmode="decimal" min="0" step="any" placeholder="0" aria-label="Valeur de la réduction" />
+                  <select id="discountMode" aria-label="Type de réduction">
+                    <option value="amount">GNF</option>
+                    <option value="percent">%</option>
+                  </select>
+                </div>
+                <strong id="discount">0 FG</strong>
               </div>
               <div class="totals-row">
                 <span>TVA</span>

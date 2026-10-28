@@ -37,6 +37,7 @@ function saleFromRow(row) {
     time: created.toLocaleString('fr-FR'),
     saleDate: getDateKey(created),
     total: Number(row.total),
+    discount: Number(row.discount || 0),
     totalLabel: formatCurrency(Number(row.total)),
     paymentMethod: row.payment_method,
     cashierId: row.cashier_id,
@@ -173,13 +174,14 @@ function mergePendingSales() {
 const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
 
 // Même calcul que le serveur (qui, lui, refait le calcul avec ses propres prix à l'envoi).
-function estimateTotals(items) {
+function estimateTotals(items, discount = 0) {
   const subtotal = round2(items.reduce((sum, item) => {
     const product = state.products.find((candidate) => candidate.id === item.product_id);
     return sum + (product ? product.price * item.quantity : 0);
   }, 0));
-  const tax = round2(subtotal * Number(state.businessConfig.taxRate || 0) / 100);
-  return { subtotal, tax, total: round2(subtotal + tax) };
+  const applied = Math.min(Math.max(round2(Number(discount) || 0), 0), subtotal);
+  const tax = round2((subtotal - applied) * Number(state.businessConfig.taxRate || 0) / 100);
+  return { subtotal, discount: applied, tax, total: round2(subtotal - applied + tax) };
 }
 
 const RPC_TIMEOUT_MS = 8000;
@@ -363,13 +365,14 @@ export async function saveBusinessConfig() {
 // ---------- Encaissement (atomique, calculé par le serveur) ----------
 // En ligne : une seule requête atomique côté serveur. Réseau coupé ou trop lent : la vente est
 // gardée sur l'appareil (file d'attente) et envoyée plus tard par flushQueue().
-export async function checkout({ paymentMethod, customerId }) {
+export async function checkout({ paymentMethod, customerId, discount = 0 }) {
   assertSubscription();
   const items = state.cart.map((item) => ({ product_id: item.id, quantity: item.quantity }));
   const clientId = crypto.randomUUID();
   const soldAt = new Date();
   const customer = state.customers.find((entry) => entry.id === customerId);
   const cartItems = state.cart.map((item) => ({ name: item.name, quantity: item.quantity }));
+  const discountAmount = Math.max(Math.round(Number(discount) || 0), 0);
 
   const buildSale = (id, total, extra = {}) => ({
     id,
@@ -377,6 +380,7 @@ export async function checkout({ paymentMethod, customerId }) {
     time: soldAt.toLocaleString('fr-FR'),
     saleDate: getDateKey(soldAt),
     total,
+    discount: discountAmount,
     totalLabel: formatCurrency(total),
     paymentMethod,
     cashierId: state.currentUser.id,
@@ -396,7 +400,8 @@ export async function checkout({ paymentMethod, customerId }) {
         p_customer_id: customerId || null,
         p_client_id: clientId,
         p_sold_at: soldAt.toISOString(),
-        p_allow_shortfall: false
+        p_allow_shortfall: false,
+        p_discount: discountAmount
       }));
       setOffline(false);
     } catch (error) {
@@ -420,8 +425,8 @@ export async function checkout({ paymentMethod, customerId }) {
   }
 
   // Hors connexion : mise en file d'attente (lève une erreur si l'appareil ne peut pas la garder).
-  const totals = estimateTotals(items);
-  const sale = buildSale(`local-${clientId}`, totals.total, { pending: true });
+  const totals = estimateTotals(items, discountAmount);
+  const sale = buildSale(`local-${clientId}`, totals.total, { pending: true, discount: totals.discount });
   offline.enqueueSale(userId(), {
     clientId,
     businessId: businessId(),
@@ -429,6 +434,7 @@ export async function checkout({ paymentMethod, customerId }) {
     paymentMethod,
     customerId: customerId || null,
     soldAt: soldAt.toISOString(),
+    discount: totals.discount,
     sale
   });
   state.salesHistory.unshift(sale);
@@ -449,7 +455,8 @@ async function sendQueued(entry) {
     p_customer_id: customerId,
     p_client_id: entry.clientId,
     p_sold_at: entry.soldAt,
-    p_allow_shortfall: true // la vente a déjà eu lieu : on l'accepte même si le stock est devenu insuffisant
+    p_allow_shortfall: true, // la vente a déjà eu lieu : on l'accepte même si le stock est devenu insuffisant
+    p_discount: Number(entry.discount) || 0
   }));
   try {
     return await send(entry.customerId);

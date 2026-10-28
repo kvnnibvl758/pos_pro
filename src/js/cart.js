@@ -94,9 +94,24 @@ export function renderCart() {
   updateTotals();
 }
 
+// Réduction saisie à la caisse : montant en GNF ou pourcentage. Jamais négative, jamais supérieure au sous-total.
+export function getDiscountAmount(subtotal) {
+  const value = Number(el.discountValue?.value);
+  if (!Number.isFinite(value) || value <= 0 || subtotal <= 0) return 0;
+  const raw = el.discountMode?.value === 'percent' ? subtotal * Math.min(value, 100) / 100 : value;
+  return Math.min(Math.round(raw), Math.round(subtotal));
+}
+
+export function resetDiscount() {
+  if (el.discountValue) el.discountValue.value = '';
+  if (el.discountMode) el.discountMode.value = 'amount';
+  state.discount = 0;
+}
+
 export function updateTotals() {
   const subtotal = getCartSubtotal();
-  const tax = subtotal * (Number(state.businessConfig.taxRate || 0) / 100);
+  state.discount = getDiscountAmount(subtotal);
+  const tax = (subtotal - state.discount) * (Number(state.businessConfig.taxRate || 0) / 100);
   const total = subtotal - state.discount + tax;
 
   el.subtotal.textContent = formatCurrency(subtotal);
@@ -113,8 +128,9 @@ export function printReceipt(preopenedWindow = null) {
   }
 
   const subtotal = getCartSubtotal();
-  const tax = subtotal * (Number(state.businessConfig.taxRate || 0) / 100);
-  const total = subtotal + tax;
+  const discount = getDiscountAmount(subtotal);
+  const tax = (subtotal - discount) * (Number(state.businessConfig.taxRate || 0) / 100);
+  const total = subtotal - discount + tax;
   const chosenCustomer = state.customers.find((customer) => String(customer.id) === String(el.customerSelect.value));
   const customerLabel = chosenCustomer ? chosenCustomer.name : 'Client général';
 
@@ -140,6 +156,7 @@ export function printReceipt(preopenedWindow = null) {
         `).join('')}
         <hr />
         <div class="line"><span>Sous-total</span><span>${formatCurrency(subtotal)}</span></div>
+        ${discount > 0 ? `<div class="line"><span>Réduction</span><span>-${formatCurrency(discount)}</span></div>` : ''}
         <div class="line"><span>TVA</span><span>${formatCurrency(tax)}</span></div>
         <div class="line"><span>Total</span><strong>${formatCurrency(total)}</strong></div>
         <hr />
@@ -161,8 +178,12 @@ export function printReceipt(preopenedWindow = null) {
 export function initCart() {
   el.clearCartBtn.addEventListener('click', () => {
     state.cart.length = 0;
+    resetDiscount();
     renderCart();
   });
+
+  if (el.discountValue) el.discountValue.addEventListener('input', updateTotals);
+  if (el.discountMode) el.discountMode.addEventListener('change', updateTotals);
 
   el.paymentOptions.querySelectorAll('.payment-btn[data-payment]').forEach((button) => {
     button.addEventListener('click', () => {

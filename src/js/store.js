@@ -52,10 +52,11 @@ const local = {
     persistBusinessConfig();
   },
 
-  async checkout({ paymentMethod, customerId }) {
+  async checkout({ paymentMethod, customerId, discount = 0 }) {
     const subtotal = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const tax = subtotal * (Number(state.businessConfig.taxRate || 0) / 100);
-    const total = subtotal + tax;
+    const discountAmount = Math.min(Math.max(Math.round(Number(discount) || 0), 0), Math.round(subtotal));
+    const tax = (subtotal - discountAmount) * (Number(state.businessConfig.taxRate || 0) / 100);
+    const total = subtotal - discountAmount + tax;
     const customer = state.customers.find((entry) => entry.id === customerId);
     const now = new Date();
 
@@ -64,6 +65,7 @@ const local = {
       time: now.toLocaleString('fr-FR'),
       saleDate: getDateKey(now),
       total,
+      discount: discountAmount,
       totalLabel: formatCurrency(total),
       paymentMethod,
       cashierId: state.currentUser.id,

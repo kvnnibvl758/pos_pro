@@ -50,6 +50,8 @@ export const el = {
   salesHistory: byId('salesHistory'),
   subtotal: byId('subtotal'),
   discount: byId('discount'),
+  discountValue: byId('discountValue'),
+  discountMode: byId('discountMode'),
   tax: byId('tax'),
   total: byId('total'),
   paymentOptions: byId('paymentOptions'),

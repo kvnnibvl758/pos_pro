@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { el } from './elements.js';
 import { getVisibleSales, escapeHtml } from './utils.js';
 import * as store from './store.js';
-import { renderCart, printReceipt } from './cart.js';
+import { renderCart, printReceipt, resetDiscount } from './cart.js';
 import { renderProducts } from './products.js';
 
 export function renderSalesHistory() {
@@ -45,7 +45,8 @@ export function initSales() {
     try {
       sale = await store.checkout({
         paymentMethod: state.selectedPaymentMethod,
-        customerId: el.customerSelect.value || null
+        customerId: el.customerSelect.value || null,
+        discount: state.discount
       });
     } catch (error) {
       if (receiptWindow) receiptWindow.close();
@@ -62,6 +63,7 @@ export function initSales() {
       ? `Vente enregistrée hors connexion : ${sale.totalLabel}\nElle sera envoyée automatiquement dès le retour du réseau.`
       : `Paiement enregistré : ${sale.totalLabel}`);
     state.cart.length = 0;
+    resetDiscount();
     renderProducts(el.searchInput.value);
     renderCart();
     renderSalesHistory();

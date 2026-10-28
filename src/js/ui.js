@@ -42,6 +42,8 @@ export function clearPostSessionData() {
   state.currentUser = null;
   state.cart.length = 0;
   state.discount = 0;
+  if (el.discountValue) el.discountValue.value = '';
+  if (el.discountMode) el.discountMode.value = 'amount';
 
   el.loginForm.reset();
   el.cloudAuthForm.reset();
