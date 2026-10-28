@@ -115,8 +115,10 @@
               <circle cx="11" cy="11" r="7"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input id="searchInput" type="text" placeholder="Rechercher un produit..." />
+            <input id="searchInput" type="text" placeholder="Rechercher ou scanner un produit..." />
+            <button id="scanCartBtn" class="scan-cart-btn" type="button" title="Scanner avec la caméra" aria-label="Scanner un produit avec la caméra">📷</button>
           </div>
+          <div id="scanFeedback" class="scan-feedback hidden" role="status" aria-live="polite"></div>
           <div class="chip-group" id="categoryChips">
             <button class="chip active" data-category="">Tout</button>
           </div>

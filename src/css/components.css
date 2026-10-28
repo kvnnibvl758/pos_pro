@@ -583,3 +583,10 @@
   margin: 0;
   opacity: 0.8;
 }
+
+/* Scan à la caisse */
+.scan-cart-btn { border: 0; background: transparent; cursor: pointer; font-size: 18px; padding: 0 4px; line-height: 1; }
+.scan-feedback { padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.scan-feedback.hidden { display: none; }
+.scan-feedback.ok { background: #e6f6ec; color: #166534; }
+.scan-feedback.error { background: #fdecec; color: #991b1b; }

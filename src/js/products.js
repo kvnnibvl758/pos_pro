@@ -13,7 +13,6 @@ let lastFilterKey = '';
 
 // Suggestions proposées quand on tape une catégorie (la personne peut écrire n'importe quelle catégorie).
 const SUGGESTED_CATEGORIES = [
-  'Boissons', 'Alimentaire', 'Desserts',
   'Cosmétiques', 'Soins du visage', 'Soins du corps', 'Maquillage', 'Parfums', 'Cheveux',
   'Vêtements', 'Accessoires', 'Électronique'
 ];
@@ -240,18 +239,68 @@ export function closeProductModal() {
 
 export function initProducts() {
   el.searchInput.addEventListener('input', (event) => renderProducts(event.target.value));
-  // Lecteur de codes-barres USB à la caisse : le code tapé puis Entrée ajoute directement le produit au panier.
+  // Scan à la caisse : lecteur USB (le code est « tapé » puis Entrée) ou caméra → le produit est ajouté au panier.
+  let feedbackTimer = 0;
+  const showScanFeedback = (message, ok) => {
+    const box = el.scanFeedback;
+    if (!box) return;
+    box.textContent = message;
+    box.className = `scan-feedback ${ok ? 'ok' : 'error'}`;
+    clearTimeout(feedbackTimer);
+    feedbackTimer = setTimeout(() => { box.className = 'scan-feedback hidden'; }, 3500);
+  };
+  const addScannedCode = (rawCode) => {
+    const code = cleanBarcode(rawCode);
+    if (!code) return false;
+    const match = state.products.find((product) => product.barcode && product.barcode === code);
+    if (!match) {
+      showScanFeedback(`Code ${code} inconnu : ajoutez d’abord ce produit au catalogue.`, false);
+      return false;
+    }
+    addToCart(match.id);
+    showScanFeedback(`${match.name} ajouté au panier`, true);
+    return true;
+  };
   el.searchInput.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
-    const code = cleanBarcode(el.searchInput.value);
-    if (!code) return;
-    const match = state.products.find((product) => product.barcode && product.barcode === code);
+    const typed = el.searchInput.value.trim();
+    // Seuls les codes (chiffres) sont traités comme un scan ; un nom reste une simple recherche.
+    if (!/^[0-9]{6,}$/.test(typed)) return;
     event.preventDefault();
-    if (!match) return;
-    addToCart(match.id);
+    addScannedCode(typed);
     el.searchInput.value = '';
     renderProducts('');
   });
+  // Lecteur USB sans cliquer dans la recherche : une rafale de touches rapides terminée par Entrée.
+  let scanBuffer = '';
+  let lastKeyAt = 0;
+  document.addEventListener('keydown', (event) => {
+    const target = event.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const now = Date.now();
+    if (now - lastKeyAt > 80) scanBuffer = '';
+    lastKeyAt = now;
+    if (event.key === 'Enter') {
+      if (scanBuffer.length >= 6) addScannedCode(scanBuffer);
+      scanBuffer = '';
+    } else if (/^[0-9A-Za-z-]$/.test(event.key)) {
+      scanBuffer += event.key;
+    }
+  });
+  if (el.scanCartBtn) {
+    el.scanCartBtn.addEventListener('click', async () => {
+      el.scanCartBtn.disabled = true;
+      try {
+        const code = await scanBarcodeWithCamera();
+        if (code) addScannedCode(code);
+      } catch (error) {
+        showScanFeedback(error.message, false);
+      } finally {
+        el.scanCartBtn.disabled = false;
+      }
+    });
+  }
 
   el.loadMoreProductsBtn.addEventListener('click', () => {
     visibleProductCount += PRODUCTS_PAGE_SIZE;
