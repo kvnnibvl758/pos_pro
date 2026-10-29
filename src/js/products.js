@@ -195,7 +195,11 @@ export function openProductModal(productId = null) {
 }
 
 const BARCODE_HINT = 'Avec un lecteur USB : cliquez dans ce champ puis scannez.';
-const setBarcodeStatus = (text) => { if (el.barcodeStatus) el.barcodeStatus.textContent = text; };
+const setBarcodeStatus = (text) => {
+  if (!el.barcodeStatus) return;
+  el.barcodeStatus.textContent = text;
+  el.barcodeStatus.classList.remove('barcode-warning');
+};
 
 // Après un scan (ou une saisie) : détecte un doublon, puis reconnaît le produit et remplit les champs vides.
 async function handleBarcode(rawCode) {
@@ -205,7 +209,8 @@ async function handleBarcode(rawCode) {
 
   const duplicate = state.products.find((product) => product.barcode === code && product.id !== state.editingProductId);
   if (duplicate) {
-    setBarcodeStatus(`Ce code est déjà utilisé par « ${duplicate.name} ». Modifiez ce produit au lieu d’en créer un second.`);
+    setBarcodeStatus(`⚠️ Produit déjà enregistré : « ${duplicate.name} ». Modifiez-le au lieu d’en créer un second.`);
+    el.barcodeStatus?.classList.add('barcode-warning');
     return;
   }
 
@@ -394,6 +399,20 @@ export function initProducts() {
       ? state.products.find((product) => product.id === state.editingProductId)
       : null;
 
+    // Pas de doublon : même code-barres ou même nom qu'un produit déjà enregistré.
+    const newBarcode = cleanBarcode(formData.get('productBarcode'));
+    const others = state.products.filter((product) => product.id !== state.editingProductId);
+    const sameBarcode = newBarcode && others.find((product) => product.barcode === newBarcode);
+    if (sameBarcode) {
+      alert(`Ce produit est déjà enregistré : « ${sameBarcode.name} » utilise déjà ce code-barres.\nModifiez le produit existant au lieu d’en créer un second.`);
+      return;
+    }
+    const sameName = others.find((product) => product.name.trim().toLowerCase() === name.toLowerCase());
+    if (sameName) {
+      alert(`Un produit nommé « ${sameName.name} » est déjà enregistré.\nModifiez-le, ou donnez un nom différent à celui-ci (par exemple avec sa taille ou sa marque).`);
+      return;
+    }
+
     const productData = {
       name,
       category,
@@ -409,7 +428,9 @@ export function initProducts() {
     try {
       await store.saveProduct(productData, existingProduct ? existingProduct.id : null);
     } catch (error) {
-      alert(error.message);
+      alert(/duplicate|unique|23505/i.test(String(error.message))
+        ? 'Ce produit est déjà enregistré (même code-barres).'
+        : error.message);
       return;
     } finally {
       el.productSubmitBtn.disabled = false;

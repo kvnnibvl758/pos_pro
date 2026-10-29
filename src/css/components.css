@@ -599,3 +599,5 @@
 .confirm-notice-email { font-weight: 700; word-break: break-all; }
 .confirm-notice-box ol { margin: 12px 0 18px; padding-left: 20px; line-height: 1.7; }
 .confirm-notice-btn { width: 100%; padding: 12px; border: 0; border-radius: 8px; background: var(--primary, #1f6feb); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; }
+
+.barcode-warning { color: #b42318; font-weight: 700; }
