@@ -232,6 +232,8 @@ async function handleBarcode(rawCode) {
 }
 
 export function closeProductModal() {
+  const savedMsg = document.getElementById('productSavedMsg');
+  if (savedMsg) savedMsg.hidden = true;
   setBarcodeStatus(BARCODE_HINT);
   el.productModal.classList.add('hidden');
   state.editingProductId = null;
@@ -436,7 +438,32 @@ export function initProducts() {
       el.productSubmitBtn.disabled = false;
     }
 
-    closeProductModal();
     renderProducts(el.searchInput.value);
+    if (existingProduct) {
+      closeProductModal();
+      return;
+    }
+
+    // Nouveau produit : la fenêtre reste ouverte pour en enregistrer d'autres à la suite.
+    const keptCategory = category;
+    el.addProductForm.reset();
+    el.productCategory.value = keptCategory;
+    el.imagePreview.src = '';
+    el.imagePreview.classList.remove('visible');
+    syncProductStockFieldVisibility();
+    setBarcodeStatus(BARCODE_HINT);
+    let saved = document.getElementById('productSavedMsg');
+    if (!saved) {
+      saved = document.createElement('div');
+      saved.id = 'productSavedMsg';
+      saved.className = 'product-saved-msg';
+      saved.setAttribute('role', 'status');
+      el.addProductForm.prepend(saved);
+    }
+    saved.textContent = `✅ « ${name} » est enregistré. Vous pouvez en ajouter un autre.`;
+    saved.hidden = false;
+    clearTimeout(saved._timer);
+    saved._timer = setTimeout(() => { saved.hidden = true; }, 6000);
+    el.productBarcode.focus();
   });
 }
