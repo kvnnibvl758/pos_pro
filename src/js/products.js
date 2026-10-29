@@ -5,6 +5,7 @@ import { formatCurrency, escapeHtml, validateImageFile } from './utils.js';
 import { canManageProducts, isInventoryEnabled, productTracksStock } from './permissions.js';
 import * as store from './store.js';
 import { addToCart } from './cart.js';
+import { confirmDialog } from './confirmDialog.js';
 import { scanBarcodeWithCamera, lookupProductByBarcode, cleanBarcode, fixAzertyCode } from './barcode.js';
 
 const PRODUCTS_PAGE_SIZE = 60;
@@ -143,7 +144,14 @@ export async function deleteProduct(productId) {
 
   const product = state.products.find((entry) => entry.id === productId);
   if (!product) return;
-  if (!window.confirm(`Supprimer le produit « ${product.name} » ?`)) return;
+  const confirmed = await confirmDialog({
+    title: 'Supprimer ce produit ?',
+    message: `Voulez-vous vraiment supprimer « ${product.name} » ? Cette action est définitive.`,
+    confirmLabel: 'Oui, supprimer',
+    cancelLabel: 'Non, garder',
+    danger: true
+  });
+  if (!confirmed) return;
 
   try {
     await store.removeProduct(productId);

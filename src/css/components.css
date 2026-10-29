@@ -610,3 +610,8 @@
 
 .product-saved-msg { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; background: #e6f6ec; color: #166534; font-size: 13px; font-weight: 600; }
 .product-saved-msg[hidden] { display: none; }
+
+.confirm-dialog-actions { display: flex; gap: 10px; margin-top: 18px; }
+.confirm-dialog-actions button { flex: 1; width: auto; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; }
+.confirm-dialog-cancel { border: 1px solid var(--border, #d0d5dd); background: var(--surface, #fff); color: var(--text, #1f2933); }
+.confirm-dialog-danger { background: #d92d20; }
