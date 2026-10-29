@@ -601,3 +601,9 @@
 .confirm-notice-btn { width: 100%; padding: 12px; border: 0; border-radius: 8px; background: var(--primary, #1f6feb); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; }
 
 .barcode-warning { color: #b42318; font-weight: 700; }
+
+/* Boutons Modifier / Supprimer : restent dans la carte produit, même étroite */
+.product-card { min-width: 0; overflow: hidden; }
+.product-name { overflow-wrap: anywhere; }
+.product-admin-actions { flex-wrap: wrap; }
+.product-admin-actions button { flex: 1 1 70px; min-width: 0; padding: 6px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
