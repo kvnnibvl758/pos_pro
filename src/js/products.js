@@ -5,7 +5,7 @@ import { formatCurrency, escapeHtml, validateImageFile } from './utils.js';
 import { canManageProducts, isInventoryEnabled, productTracksStock } from './permissions.js';
 import * as store from './store.js';
 import { addToCart } from './cart.js';
-import { scanBarcodeWithCamera, lookupProductByBarcode, cleanBarcode } from './barcode.js';
+import { scanBarcodeWithCamera, lookupProductByBarcode, cleanBarcode, fixAzertyCode } from './barcode.js';
 
 const PRODUCTS_PAGE_SIZE = 60;
 let visibleProductCount = PRODUCTS_PAGE_SIZE;
@@ -263,7 +263,7 @@ export function initProducts() {
   };
   el.searchInput.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
-    const typed = el.searchInput.value.trim();
+    const typed = fixAzertyCode(el.searchInput.value);
     // Seuls les codes (chiffres) sont traités comme un scan ; un nom reste une simple recherche.
     if (!/^[0-9]{6,}$/.test(typed)) return;
     event.preventDefault();
@@ -284,7 +284,7 @@ export function initProducts() {
     if (event.key === 'Enter') {
       if (scanBuffer.length >= 6) addScannedCode(scanBuffer);
       scanBuffer = '';
-    } else if (/^[0-9A-Za-z-]$/.test(event.key)) {
+    } else if (/^[0-9A-Za-z\-&é"'(è_çà]$/.test(event.key)) {
       scanBuffer += event.key;
     }
   });
@@ -330,6 +330,14 @@ export function initProducts() {
     if (event.key !== 'Enter') return;
     event.preventDefault(); // le lecteur USB envoie Entrée : on ne doit pas valider le formulaire
     handleBarcode(el.productBarcode.value);
+  });
+  // Corrige à l'écran un code arrivé en & é " ' ( (lecteur QWERTY sur clavier AZERTY).
+  const fixField = (input) => { const fixed = fixAzertyCode(input.value); if (fixed !== input.value.trim()) input.value = fixed; };
+  el.productBarcode.addEventListener('input', () => fixField(el.productBarcode));
+  el.searchInput.addEventListener('input', () => {
+    const before = el.searchInput.value;
+    fixField(el.searchInput);
+    if (el.searchInput.value !== before) renderProducts(el.searchInput.value);
   });
   el.productBarcode.addEventListener('change', () => handleBarcode(el.productBarcode.value));
 

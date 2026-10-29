@@ -23,7 +23,15 @@ function loadLibrary() {
   return libPromise;
 }
 
-export const cleanBarcode = (value) => String(value || '').trim().replace(/[^0-9A-Za-z-]/g, '').slice(0, 32);
+// Lecteur réglé en QWERTY sur un clavier AZERTY : les chiffres arrivent sous la forme & é " ' ( - è _ ç à.
+const AZERTY_DIGITS = { '&': '1', 'é': '2', '"': '3', "'": '4', '(': '5', '-': '6', 'è': '7', '_': '8', 'ç': '9', 'à': '0' };
+export function fixAzertyCode(value) {
+  const text = String(value || '').trim();
+  if (!/^[0-9&é"'(\-è_çà]{6,}$/.test(text) || !/[&é"'(è_çà]/.test(text)) return text;
+  return text.replace(/[&é"'(\-è_çà]/g, (char) => AZERTY_DIGITS[char]);
+}
+
+export const cleanBarcode = (value) => fixAzertyCode(value).replace(/[^0-9A-Za-z-]/g, '').slice(0, 32);
 
 // Ouvre la caméra dans une fenêtre et renvoie le code lu (ou null si la personne ferme la fenêtre).
 export async function scanBarcodeWithCamera() {
