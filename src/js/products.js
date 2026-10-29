@@ -28,11 +28,12 @@ function existingCategories() {
 }
 
 export function syncProductCategoryOptions() {
-  if (!el.productCategoryList) return;
+  if (!el.productCategoryPicker) return;
   const existing = existingCategories();
   const known = new Set(existing.map((name) => name.toLowerCase()));
   const suggestions = [...existing, ...SUGGESTED_CATEGORIES.filter((name) => !known.has(name.toLowerCase()))];
-  el.productCategoryList.innerHTML = suggestions.map((category) => `<option value="${escapeHtml(category)}"></option>`).join('');
+  el.productCategoryPicker.innerHTML = '<option value="">▾ Choisir dans la liste…</option>'
+    + suggestions.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
 }
 
 // La liste déroulante des catégories suit les catégories réellement utilisées par les produits.
@@ -320,6 +321,13 @@ export function initProducts() {
   el.loadMoreProductsBtn.addEventListener('click', () => {
     visibleProductCount += PRODUCTS_PAGE_SIZE;
     renderProducts(el.searchInput.value);
+  });
+
+  // Liste déroulante des catégories dans le formulaire produit : le choix remplit le champ (qu'on peut aussi taper).
+  el.productCategoryPicker.addEventListener('change', () => {
+    if (el.productCategoryPicker.value) el.productCategory.value = el.productCategoryPicker.value;
+    el.productCategoryPicker.value = '';
+    el.productCategory.focus();
   });
 
   el.categoryChips.addEventListener('change', () => {

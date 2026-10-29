@@ -620,3 +620,5 @@
 
 .update-banner { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 9000; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 24px); padding: 10px 14px; border-radius: 10px; background: #1f2933; color: #fff; font-size: 13.5px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
 .update-banner button { border: 0; border-radius: 6px; padding: 8px 12px; background: #fff; color: #1f2933; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
+.category-picker { width: 100%; margin-bottom: 6px; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; }

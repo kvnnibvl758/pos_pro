@@ -318,8 +318,10 @@
             </label>
             <label>
               Catégorie
-              <input id="productCategory" name="productCategory" type="text" list="productCategoryList" placeholder="Ex: Cosmétiques, Boissons..." maxlength="40" autocomplete="off" required />
-              <datalist id="productCategoryList"></datalist>
+              <select id="productCategoryPicker" class="category-picker" aria-label="Choisir une catégorie dans la liste">
+                <option value="">▾ Choisir dans la liste…</option>
+              </select>
+              <input id="productCategory" name="productCategory" type="text" placeholder="ou écrire une nouvelle catégorie" maxlength="40" autocomplete="off" required />
             </label>
           </div>
 

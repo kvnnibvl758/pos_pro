@@ -112,7 +112,7 @@ export const el = {
   scanBarcodeBtn: byId('scanBarcodeBtn'),
   barcodeStatus: byId('barcodeStatus'),
   productCategory: byId('productCategory'),
-  productCategoryList: byId('productCategoryList'),
+  productCategoryPicker: byId('productCategoryPicker'),
   productPrice: byId('productPrice'),
   productStock: byId('productStock'),
   productStockField: byId('productStockField'),
