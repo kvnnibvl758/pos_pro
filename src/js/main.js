@@ -24,11 +24,20 @@ import { showLoading } from './loading.js';
 function initRefreshButton() {
   const button = document.getElementById('refreshAppBtn');
   if (!button) return;
-  button.addEventListener('click', () => {
+  button.addEventListener('click', async () => {
     if (state.cart.length && !confirm('Le panier en cours sera vidé. Actualiser quand même ?')) return;
     showLoading('Actualisation…');
-    // Petit délai pour que le rond s'affiche avant le rechargement.
-    setTimeout(() => window.location.reload(), 150);
+    // En ligne : on efface les anciens fichiers gardés en mémoire pour récupérer la dernière version publiée.
+    // Hors connexion on les garde, sinon l'application ne pourrait plus démarrer.
+    if (navigator.onLine) {
+      try {
+        const registration = await navigator.serviceWorker?.getRegistration();
+        await registration?.update();
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key)));
+      } catch { /* on recharge quand même */ }
+    }
+    window.location.reload();
   });
 }
 
