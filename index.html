@@ -119,9 +119,9 @@
             <button id="scanCartBtn" class="scan-cart-btn" type="button" title="Scanner avec la caméra" aria-label="Scanner un produit avec la caméra">📷</button>
           </div>
           <div id="scanFeedback" class="scan-feedback hidden" role="status" aria-live="polite"></div>
-          <div class="chip-group" id="categoryChips">
-            <button class="chip active" data-category="">Tout</button>
-          </div>
+          <select id="categoryChips" class="category-select" aria-label="Filtrer par catégorie">
+            <option value="">Toutes les catégories</option>
+          </select>
         </section>
 
         <!-- Zone de travail : catalogue des produits et panier -->

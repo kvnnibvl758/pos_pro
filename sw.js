@@ -9,7 +9,7 @@
 //  - script Supabase (CDN) : cache d'abord, rafraîchi en arrière-plan.
 //  - tout le reste (API Supabase, polices...) : jamais intercepté. Les données métier ne sont
 //    JAMAIS mises en cache ici : elles viennent toujours du serveur.
-const VERSION = 'pos-shell-v2';
+const VERSION = 'pos-shell-v3';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'src/icons/icon-192.png', 'src/vendor/supabase-js-2.117.2.js'];
 const CDN_SCRIPT = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 const NETWORK_TIMEOUT_MS = 4000;

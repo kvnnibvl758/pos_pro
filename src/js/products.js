@@ -35,17 +35,17 @@ export function syncProductCategoryOptions() {
   el.productCategoryList.innerHTML = suggestions.map((category) => `<option value="${escapeHtml(category)}"></option>`).join('');
 }
 
-// Les puces de filtre suivent les catégories réellement utilisées par les produits.
+// La liste déroulante des catégories suit les catégories réellement utilisées par les produits.
 function renderCategoryChips() {
   if (!el.categoryChips) return;
   const categories = existingCategories();
   if (state.activeCategory && !categories.some((name) => name.toLowerCase() === state.activeCategory.toLowerCase())) {
     state.activeCategory = '';
   }
-  const chips = [{ label: 'Tout', value: '' }, ...categories.map((name) => ({ label: name, value: name }))];
-  el.categoryChips.innerHTML = chips.map((chip) => `
-    <button class="chip${chip.value.toLowerCase() === (state.activeCategory || '').toLowerCase() ? ' active' : ''}" type="button" data-category="${escapeHtml(chip.value)}">${escapeHtml(chip.label)}</button>
-  `).join('');
+  const options = [{ label: 'Toutes les catégories', value: '' }, ...categories.map((name) => ({ label: name, value: name }))];
+  el.categoryChips.innerHTML = options.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`).join('');
+  const active = categories.find((name) => name.toLowerCase() === (state.activeCategory || '').toLowerCase()) || '';
+  el.categoryChips.value = active;
 }
 
 export function renderProducts(filter = el.searchInput.value) {
@@ -322,10 +322,8 @@ export function initProducts() {
     renderProducts(el.searchInput.value);
   });
 
-  el.categoryChips.addEventListener('click', (event) => {
-    const button = event.target.closest('.chip[data-category]');
-    if (!button) return;
-    state.activeCategory = button.dataset.category || '';
+  el.categoryChips.addEventListener('change', () => {
+    state.activeCategory = el.categoryChips.value || '';
     renderProducts(el.searchInput.value);
   });
 
