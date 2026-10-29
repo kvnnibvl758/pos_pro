@@ -39,6 +39,7 @@ export const el = {
   // Catalogue / recherche
   searchInput: byId('searchInput'),
   scanCartBtn: byId('scanCartBtn'),
+  manageCategoriesBtn: byId('manageCategoriesBtn'),
   scanFeedback: byId('scanFeedback'),
   categoryChips: byId('categoryChips'),
   productGrid: byId('productGrid'),

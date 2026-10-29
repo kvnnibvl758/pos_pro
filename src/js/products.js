@@ -6,6 +6,7 @@ import { canManageProducts, isInventoryEnabled, productTracksStock } from './per
 import * as store from './store.js';
 import { addToCart } from './cart.js';
 import { confirmDialog } from './confirmDialog.js';
+import { openCategoriesManager } from './categoriesManager.js';
 import { scanBarcodeWithCamera, lookupProductByBarcode, cleanBarcode, fixAzertyCode } from './barcode.js';
 
 const PRODUCTS_PAGE_SIZE = 60;
@@ -44,6 +45,7 @@ function renderCategoryChips() {
     state.activeCategory = '';
   }
   const options = [{ label: 'Toutes les catégories', value: '' }, ...categories.map((name) => ({ label: name, value: name }))];
+  if (el.manageCategoriesBtn) el.manageCategoriesBtn.classList.toggle('hidden', !canManageProducts());
   el.categoryChips.innerHTML = options.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`).join('');
   const active = categories.find((name) => name.toLowerCase() === (state.activeCategory || '').toLowerCase()) || '';
   el.categoryChips.value = active;
@@ -328,6 +330,13 @@ export function initProducts() {
     if (el.productCategoryPicker.value) el.productCategory.value = el.productCategoryPicker.value;
     el.productCategoryPicker.value = '';
     el.productCategory.focus();
+  });
+
+  el.manageCategoriesBtn?.addEventListener('click', () => {
+    openCategoriesManager(() => {
+      syncProductCategoryOptions();
+      renderProducts(el.searchInput.value);
+    });
   });
 
   el.categoryChips.addEventListener('change', () => {

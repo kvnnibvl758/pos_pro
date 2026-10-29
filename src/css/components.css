@@ -622,3 +622,12 @@
 .update-banner button { border: 0; border-radius: 6px; padding: 8px 12px; background: #fff; color: #1f2933; font-weight: 700; cursor: pointer; white-space: nowrap; }
 
 .category-picker { width: 100%; margin-bottom: 6px; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer; }
+
+.categories-box { width: min(460px, 100%); max-height: 85vh; overflow-y: auto; }
+.categories-hint { color: var(--muted); font-size: 13px; }
+.categories-list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 18px; }
+.categories-row { display: flex; align-items: center; gap: 8px; }
+.categories-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.categories-input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+.categories-btn { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.categories-btn-danger:hover { border-color: #d92d20; color: #d92d20; }

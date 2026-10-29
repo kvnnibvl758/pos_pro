@@ -29,6 +29,13 @@ const local = {
     return created;
   },
 
+  async recategorize(from, to) {
+    state.products.forEach((product) => {
+      if (String(product.category || '').trim().toLowerCase() === from.trim().toLowerCase()) product.category = to;
+    });
+    saveProducts();
+  },
+
   async removeProduct(id) {
     const index = state.products.findIndex((product) => product.id === id);
     if (index >= 0) state.products.splice(index, 1);
@@ -92,6 +99,7 @@ const backend = () => (isCloudMode() ? cloud : local);
 
 export const saveProduct = (data, id) => backend().saveProduct(data, id);
 export const removeProduct = (id) => backend().removeProduct(id);
+export const recategorize = (from, to) => backend().recategorize(from, to);
 export const saveCustomer = (data) => backend().saveCustomer(data);
 export const removeCustomer = (id) => backend().removeCustomer(id);
 export const saveBusinessConfig = () => backend().saveBusinessConfig();

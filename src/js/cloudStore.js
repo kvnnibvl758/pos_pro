@@ -325,6 +325,18 @@ export async function saveProduct(data, id) {
   return saved;
 }
 
+// Renomme une catégorie pour tous les produits qui l'utilisent (sert aussi à « supprimer » une catégorie : ses produits passent dans une autre).
+export async function recategorize(from, to) {
+  assertSubscription();
+  const ids = state.products
+    .filter((product) => String(product.category || '').trim().toLowerCase() === from.trim().toLowerCase())
+    .map((product) => product.id);
+  if (!ids.length) return;
+  const updated = unwrap(await cloudClient.from('products').update({ category: to }).in('id', ids).select('id'));
+  if (updated.length !== ids.length) throw new Error('Modification non autorisée pour votre rôle.');
+  state.products.forEach((product) => { if (ids.includes(product.id)) product.category = to; });
+}
+
 export async function removeProduct(id) {
   assertSubscription();
   const deleted = unwrap(await cloudClient.from('products').delete().eq('id', id).select('id'));
