@@ -337,6 +337,26 @@ export async function recategorize(from, to) {
   state.products.forEach((product) => { if (ids.includes(product.id)) product.category = to; });
 }
 
+// Enregistre plusieurs nouveaux produits d'un coup (import par photos), par paquets.
+export async function saveProductsBulk(list) {
+  assertSubscription();
+  const rows = list.map((data) => ({
+    name: data.name,
+    category: data.category,
+    price: data.price,
+    stock: data.stock || 0,
+    track_stock: Boolean(data.trackStock),
+    image: data.image || '',
+    barcode: data.barcode || '',
+    business_id: businessId()
+  }));
+  const CHUNK = 20;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const saved = unwrap(await cloudClient.from('products').insert(rows.slice(i, i + CHUNK)).select());
+    saved.forEach((row) => upsertInState(state.products, productFromRow(row), true));
+  }
+}
+
 export async function removeProduct(id) {
   assertSubscription();
   const deleted = unwrap(await cloudClient.from('products').delete().eq('id', id).select('id'));

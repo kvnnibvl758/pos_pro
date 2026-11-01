@@ -29,6 +29,11 @@ const local = {
     return created;
   },
 
+  async saveProductsBulk(list) {
+    list.forEach((data) => state.products.unshift({ id: newId(), emoji: '', stock: 0, trackStock: false, ...data }));
+    saveProducts();
+  },
+
   async recategorize(from, to) {
     state.products.forEach((product) => {
       if (String(product.category || '').trim().toLowerCase() === from.trim().toLowerCase()) product.category = to;
@@ -99,6 +104,7 @@ const backend = () => (isCloudMode() ? cloud : local);
 
 export const saveProduct = (data, id) => backend().saveProduct(data, id);
 export const removeProduct = (id) => backend().removeProduct(id);
+export const saveProductsBulk = (list) => backend().saveProductsBulk(list);
 export const recategorize = (from, to) => backend().recategorize(from, to);
 export const saveCustomer = (data) => backend().saveCustomer(data);
 export const removeCustomer = (id) => backend().removeCustomer(id);

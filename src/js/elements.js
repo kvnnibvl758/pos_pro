@@ -40,6 +40,7 @@ export const el = {
   searchInput: byId('searchInput'),
   scanCartBtn: byId('scanCartBtn'),
   manageCategoriesBtn: byId('manageCategoriesBtn'),
+  photoImportBtn: byId('photoImportBtn'),
   scanFeedback: byId('scanFeedback'),
   categoryChips: byId('categoryChips'),
   productGrid: byId('productGrid'),

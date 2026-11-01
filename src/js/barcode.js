@@ -33,6 +33,25 @@ export function fixAzertyCode(value) {
 
 export const cleanBarcode = (value) => fixAzertyCode(value).replace(/[^0-9A-Za-z-]/g, '').slice(0, 32);
 
+// Lit un code-barres sur une photo (fichier image). Renvoie le code ou null.
+export async function decodeBarcodeFromFile(file) {
+  await loadLibrary();
+  const holder = document.createElement('div');
+  holder.id = `barcode-file-reader-${Math.random().toString(36).slice(2)}`;
+  holder.style.cssText = 'position:fixed;left:-9999px;top:0;width:300px;height:300px;overflow:hidden';
+  document.body.appendChild(holder);
+  try {
+    const f = window.Html5QrcodeSupportedFormats;
+    const reader = new window.Html5Qrcode(holder.id, { formatsToSupport: [f.EAN_13, f.EAN_8, f.UPC_A, f.UPC_E, f.CODE_128, f.CODE_39, f.ITF], verbose: false });
+    const text = await reader.scanFile(file, false);
+    return cleanBarcode(text) || null;
+  } catch {
+    return null; // aucun code lisible sur cette photo
+  } finally {
+    holder.remove();
+  }
+}
+
 // Ouvre la caméra dans une fenêtre et renvoie le code lu (ou null si la personne ferme la fenêtre).
 export async function scanBarcodeWithCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
