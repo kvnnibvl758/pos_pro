@@ -10,6 +10,7 @@ import { openDashboard } from './reports.js';
 import { openProductModal } from './products.js';
 import { openSettingsModal } from './settings.js';
 import { shouldShowBackupReminder } from './backupReminder.js';
+import { isCloudMode } from './supabaseClient.js';
 import { renderSubscriptionBanner } from './subscription.js';
 
 export function refreshAll() {
@@ -94,7 +95,8 @@ export function updateSessionUI() {
   renderSubscriptionBanner();
 
   if (el.backupReminderBanner) {
-    const showReminder = Boolean(state.currentUser) && canManageProducts() && shouldShowBackupReminder(state.salesHistory.length);
+    // En mode en ligne, les données sont déjà sauvegardées sur le serveur : pas de rappel.
+    const showReminder = !isCloudMode() && Boolean(state.currentUser) && canManageProducts() && shouldShowBackupReminder(state.salesHistory.length);
     el.backupReminderBanner.classList.toggle('hidden', !showReminder);
   }
 }
