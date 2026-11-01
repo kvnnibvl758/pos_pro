@@ -641,7 +641,7 @@
 .photo-bulk .categories-input { max-width: 140px; flex: 0 1 140px; }
 .photo-list { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow-y: auto; margin: 8px 0 12px; padding-right: 4px; }
 .photo-row { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; }
-.photo-thumb { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; background: var(--surface-muted, #eee); flex-shrink: 0; }
+.photo-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; background: var(--surface-muted, #eee); flex-shrink: 0; }
 .photo-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .photo-price { flex: 0 0 110px; width: 110px; }
 .photo-note { color: var(--muted); font-size: 11.5px; }

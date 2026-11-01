@@ -71,21 +71,29 @@ async function analysePhoto(file, defaults) {
 
 function markDuplicates(rows) {
   const knownBarcodes = new Set(state.products.map((p) => p.barcode).filter(Boolean));
-  const knownNames = new Set(state.products.map((p) => String(p.name || '').trim().toLowerCase()));
+  const usedNames = new Set(state.products.map((p) => String(p.name || '').trim().toLowerCase()));
   const seenBarcodes = new Set();
-  const seenNames = new Set();
   rows.forEach((row) => {
     row.note = '';
-    const key = row.name.trim().toLowerCase();
     if (row.barcode && (knownBarcodes.has(row.barcode) || seenBarcodes.has(row.barcode))) {
       row.include = false;
       row.note = 'Déjà enregistré (même code-barres)';
-    } else if (key && (knownNames.has(key) || seenNames.has(key))) {
-      row.include = false;
-      row.note = 'Un produit porte déjà ce nom';
     }
     if (row.barcode) seenBarcodes.add(row.barcode);
-    if (key) seenNames.add(key);
+    // Même nom qu'un autre produit (cas courant : plusieurs produits de la même marque) : on les distingue par un numéro.
+    const base = row.name.trim();
+    if (!base) return;
+    let candidate = base;
+    let n = 1;
+    while (usedNames.has(candidate.toLowerCase())) {
+      n += 1;
+      candidate = `${base} ${n}`;
+    }
+    usedNames.add(candidate.toLowerCase());
+    if (candidate !== base) {
+      row.name = candidate;
+      if (!row.note) row.note = 'Même nom qu’un autre produit : précisez-le (ex. Crème, Huile, Lait…)';
+    }
   });
 }
 
@@ -221,6 +229,13 @@ export function openPhotoImport(onChange) {
       const note = el('small', row.note || row.source !== 'barcode' ? 'photo-note warn' : 'photo-note', row.note || SOURCE_LABELS[row.source]);
       fields.append(name, note);
       check.addEventListener('change', () => { row.include = check.checked; refreshCount(); });
+      name.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        const inputs = [...list.querySelectorAll('.photo-fields input')];
+        const next = inputs[inputs.indexOf(name) + 1];
+        if (next) { next.focus(); next.select(); }
+      });
       name.addEventListener('input', () => { row.name = name.value; if (row.source === 'none' && name.value.trim()) { row.source = 'file'; note.textContent = 'nom saisi'; } });
       priceInput.addEventListener('input', () => { row.price = Number(priceInput.value) || 0; });
       line.append(check, img, fields, priceInput);
@@ -267,6 +282,8 @@ export function openPhotoImport(onChange) {
     cancel.addEventListener('click', close);
     box.append(bulk, list, message, saveBtn, cancel);
     refreshCount();
+    const firstEmpty = [...list.querySelectorAll('.photo-fields input')].find((input) => !input.value.trim());
+    if (firstEmpty) firstEmpty.focus();
   };
 
   const renderDone = (count) => {

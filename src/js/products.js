@@ -443,8 +443,13 @@ export function initProducts() {
     }
     const sameName = others.find((product) => product.name.trim().toLowerCase() === name.toLowerCase());
     if (sameName) {
-      alert(`Un produit nommé « ${sameName.name} » est déjà enregistré.\nModifiez-le, ou donnez un nom différent à celui-ci (par exemple avec sa taille ou sa marque).`);
-      return;
+      const keep = await confirmDialog({
+        title: 'Ce nom existe déjà',
+        message: `Un produit nommé « ${sameName.name} » est déjà enregistré. Pour les distinguer, précisez le nom (ex. « Nivea Crème », « Nivea Huile »). Enregistrer quand même avec ce nom ?`,
+        confirmLabel: 'Oui, enregistrer',
+        cancelLabel: 'Non, je précise le nom'
+      });
+      if (!keep) { el.productName.focus(); return; }
     }
 
     const productData = {
