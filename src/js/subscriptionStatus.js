@@ -5,6 +5,9 @@
 import { state } from './state.js';
 import { isCloudMode } from './supabaseClient.js';
 
+// Mettre à false pour réactiver l'abonnement payant (le reste du code est conservé).
+const FREE_SERVICE = true;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const RENEWAL_WARNING_DAYS = 30;
 
@@ -18,6 +21,8 @@ export const subscriptionConfig = {
 
 // Retourne { phase: 'none' | 'trial' | 'active' | 'expired', expiresAt, daysLeft }.
 export function getSubscription(now = Date.now()) {
+  // Le service est gratuit : aucun abonnement, aucun blocage.
+  if (FREE_SERVICE) return { phase: 'none', expiresAt: null, daysLeft: null };
   const { trialEndsAt, paidUntil } = state.businessConfig;
   if (!isCloudMode() || !trialEndsAt) return { phase: 'none', expiresAt: null, daysLeft: null };
 

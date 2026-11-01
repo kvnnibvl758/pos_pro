@@ -101,8 +101,9 @@ export function openSettingsModal() {
   el.settingsTabDonnees.style.display = isAdmin ? '' : 'none';
 
   // Onglet Abonnement : propriétaire en mode cloud. Onglet Administration : administrateur de la plateforme.
-  el.settingsTabAbonnement.style.display = isAdmin && isCloudMode() ? '' : 'none';
-  el.settingsTabAdministration.style.display = state.cloud.platformAdmin ? '' : 'none';
+  // Le service est gratuit : plus d'onglets Abonnement ni Administration (paiements).
+  el.settingsTabAbonnement.style.display = 'none';
+  el.settingsTabAdministration.style.display = 'none';
 
   switchSettingsTab('general');
   el.settingsModal.classList.remove('hidden');

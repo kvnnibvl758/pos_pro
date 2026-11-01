@@ -47,6 +47,8 @@ function describe(sub) {
 // ---------- Bandeau en haut de la caisse ----------
 export function renderSubscriptionBanner() {
   if (!el.subscriptionBanner) return;
+  // Le service est gratuit : aucun bandeau d'abonnement.
+  if (getSubscription().phase === 'none') { el.subscriptionBanner.classList.add('hidden'); return; }
   const sub = getSubscription();
   const info = describe(sub);
   // Le bandeau ne s'affiche que pour le propriétaire (c'est lui qui paie) et seulement quand il faut agir.
