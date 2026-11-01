@@ -10,6 +10,8 @@ import { renderProducts } from './products.js';
 import { renderUserManagementList } from './users.js';
 import { openProfileModal } from './cloudAuth.js';
 import { recordBackupDone, dismissBackupReminderToday } from './backupReminder.js';
+import { confirmDialog } from './confirmDialog.js';
+import { refreshAll } from './ui.js';
 import { renderSubscriptionPanel, renderAdminPanel } from './subscription.js';
 
 export function renderBusinessIdentity() {
@@ -218,6 +220,30 @@ export function initSettings() {
 
   if (el.exportBackupBtn) {
     el.exportBackupBtn.addEventListener('click', exportBackup);
+  }
+
+  if (el.resetSalesBtn) {
+    el.resetSalesBtn.addEventListener('click', async () => {
+      if (!canManageProducts()) return;
+      const confirmed = await confirmDialog({
+        title: 'Réinitialiser les ventes ?',
+        message: `Les ${state.salesHistory.length} vente(s) enregistrée(s) seront effacées définitivement, ainsi que les statistiques. Vos produits, clients et réglages ne changent pas.`,
+        confirmLabel: 'Oui, tout effacer',
+        cancelLabel: 'Non, garder',
+        danger: true
+      });
+      if (!confirmed) return;
+      el.resetSalesBtn.disabled = true;
+      try {
+        await store.resetSales();
+        refreshAll();
+        el.resetSalesMessage.textContent = '✅ Les ventes ont été réinitialisées.';
+      } catch (error) {
+        el.resetSalesMessage.textContent = error.message;
+      } finally {
+        el.resetSalesBtn.disabled = false;
+      }
+    });
   }
 
   if (el.backupBannerExportBtn) {

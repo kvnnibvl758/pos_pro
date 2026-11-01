@@ -357,6 +357,13 @@ export async function saveProductsBulk(list) {
   }
 }
 
+// Vide tout l'historique des ventes du commerce (réservé au propriétaire ; les produits ne changent pas).
+export async function resetSales() {
+  const { error } = await cloudClient.rpc('reset_business_sales', { p_business_id: businessId() });
+  if (error) throw new Error(error.code === '42501' ? 'Seul le propriétaire peut réinitialiser les ventes.' : error.message);
+  state.salesHistory.splice(0, state.salesHistory.length);
+}
+
 export async function removeProduct(id) {
   assertSubscription();
   const deleted = unwrap(await cloudClient.from('products').delete().eq('id', id).select('id'));

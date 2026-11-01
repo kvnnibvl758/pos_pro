@@ -183,6 +183,8 @@ export const el = {
   businessLogoInput: byId('businessLogoInput'),
   businessLogoPreview: byId('businessLogoPreview'),
   closeSettingsBtn: byId('closeSettingsBtn'),
+  resetSalesBtn: byId('resetSalesBtn'),
+  resetSalesMessage: byId('resetSalesMessage'),
   exportBackupBtn: byId('exportBackupBtn'),
   themeOptions: byId('themeOptions'),
   localAccountPanel: byId('localAccountPanel'),
