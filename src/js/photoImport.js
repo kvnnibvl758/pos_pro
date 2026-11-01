@@ -8,7 +8,7 @@ import { readProductName, stopOcr } from './ocr.js';
 
 const DEFAULT_PRICE = 100000;
 const THUMB_SIZE = 320;
-const OCR_SIZE = 1100;
+const OCR_SIZE = 1600;
 
 const SOURCE_LABELS = {
   barcode: 'nom trouvé par le code-barres',
@@ -55,7 +55,7 @@ async function analysePhoto(file, defaults) {
   }
   if (!name) {
     try {
-      name = await readProductName(drawScaled(bitmap, OCR_SIZE, true));
+      name = await readProductName(drawScaled(bitmap, OCR_SIZE));
       if (name) source = 'ocr';
     } catch {
       name = '';
