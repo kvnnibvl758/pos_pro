@@ -137,7 +137,7 @@ export function pickProductName(lines) {
     if (words[i + 1] && prev.includes(pair)) { words[i + 1] = ''; return; }
     if (word) dedup.push(word);
   });
-  const joined = dedup.filter(Boolean).join(' ');
+  const joined = dedup.filter(Boolean).join(' ').replace(/\s*&\s*/g, ' & ');
   const name = titleCase(joined).replace(/\b(Spf|Uv|Pc|Ph|Ml|Gnf)\b/gi, (m) => m.toUpperCase());
   return name.slice(0, 80);
 }
@@ -150,49 +150,78 @@ function collectLines(data) {
 }
 
 // Variantes de l'image : l'emballage peut avoir du texte clair sur fond foncé, des reflets, etc.
-// Les petites images sont agrandies : le texte est ainsi assez gros pour être lu.
+// Les petites images sont agrandies (deux tailles) : le texte est ainsi assez gros pour être lu.
 function variants(canvas) {
-  const target = 2000;
-  const scale = Math.min(4, Math.max(1, target / Math.max(canvas.width, canvas.height)));
-  const make = (filter) => {
-    const out = document.createElement('canvas');
-    out.width = Math.round(canvas.width * scale);
-    out.height = Math.round(canvas.height * scale);
-    const ctx = out.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.filter = filter;
-    ctx.drawImage(canvas, 0, 0, out.width, out.height);
-    return out;
-  };
-  return [
-    make('grayscale(1) contrast(1.25)'),
-    make('grayscale(1) invert(1) contrast(1.25)'),
-    make('grayscale(1) contrast(1.6) brightness(1.1)')
-  ];
+  const longest = Math.max(canvas.width, canvas.height);
+  const scales = [...new Set([
+    Math.min(4, Math.max(1, 2000 / longest)),
+    Math.min(6, Math.max(1, 3600 / longest))
+  ].map((value) => Math.round(value * 100) / 100))];
+  const filters = ['grayscale(1) contrast(1.25)', 'grayscale(1) invert(1) contrast(1.25)', 'grayscale(1) contrast(1.6) brightness(1.1)'];
+  const out = [];
+  scales.forEach((scale) => {
+    filters.forEach((filter) => {
+      const layer = document.createElement('canvas');
+      layer.width = Math.round(canvas.width * scale);
+      layer.height = Math.round(canvas.height * scale);
+      const ctx = layer.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.filter = filter;
+      ctx.drawImage(canvas, 0, 0, layer.width, layer.height);
+      out.push({ canvas: layer, scale });
+    });
+  });
+  return out;
 }
 
-const countLetters = (lines) => lines
-  .filter((line) => (Number(line.confidence) || 0) >= 60)
-  .reduce((sum, line) => sum + (String(line.text || '').match(/\p{L}/gu) || []).length, 0);
+const letterCount = (text) => (String(text || '').match(/\p{L}/gu) || []).length;
 
-// canvas → nom de produit probable ('' si rien de lisible). Plusieurs essais, on garde le plus lisible.
+function overlapRatio(a, b) {
+  const w = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+  const h = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+  if (w <= 0 || h <= 0) return 0;
+  const smaller = Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0));
+  return smaller > 0 ? (w * h) / smaller : 0;
+}
+
+// Fusionne les lignes lues par tous les essais : à un même endroit de la photo, on garde la meilleure lecture.
+// (Un texte blanc sur fond noir n'est lu que par l'essai « inversé », un texte noir sur blanc par les autres.)
+export function mergeLines(allLines) {
+  const ranked = allLines
+    .filter((line) => line.bbox && (Number(line.confidence) || 0) >= 60 && letterCount(line.text) >= 3)
+    .sort((a, b) => (b.confidence * letterCount(b.text)) - (a.confidence * letterCount(a.text)));
+  const kept = [];
+  ranked.forEach((line) => {
+    if (!kept.some((other) => overlapRatio(line.bbox, other.bbox) > 0.35)) kept.push(line);
+  });
+  return kept;
+}
+
+// canvas → nom de produit probable ('' si rien de lisible). Plusieurs essais fusionnés.
 export async function readProductName(canvas) {
+  return pickProductName(await readMergedLines(canvas));
+}
+
+export async function readMergedLines(canvas) {
   const worker = await getWorker();
-  let bestLines = [];
-  let bestScore = 0;
-  for (const candidate of variants(canvas)) {
-    for (const mode of ['11', '3']) { // 11 = texte épars (emballages), 3 = automatique
-      try {
-        await worker.setParameters({ tessedit_pageseg_mode: mode });
-        const { data } = await worker.recognize(candidate, {}, { blocks: true });
-        const lines = collectLines(data);
-        const score = countLetters(lines);
-        if (score > bestScore) { bestScore = score; bestLines = lines; }
-      } catch {
-        // cet essai a échoué : on passe au suivant
-      }
+  const all = [];
+  await worker.setParameters({ tessedit_pageseg_mode: '11' }); // texte épars : adapté aux emballages
+  for (const { canvas: layer, scale } of variants(canvas)) {
+    try {
+      const { data } = await worker.recognize(layer, {}, { blocks: true });
+      // On ramène les positions à l'échelle de la photo d'origine pour pouvoir comparer les essais entre eux.
+      collectLines(data).forEach((line) => {
+        if (!line.bbox) return;
+        all.push({
+          text: line.text,
+          confidence: line.confidence,
+          bbox: { x0: line.bbox.x0 / scale, x1: line.bbox.x1 / scale, y0: line.bbox.y0 / scale, y1: line.bbox.y1 / scale }
+        });
+      });
+    } catch {
+      // cet essai a échoué : on passe au suivant
     }
   }
-  return pickProductName(bestLines);
+  return mergeLines(all);
 }
