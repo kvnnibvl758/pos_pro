@@ -4,7 +4,7 @@
 const { app, BrowserWindow, Menu, session, shell } = require('electron');
 const path = require('node:path');
 
-const APP_URL = 'https://pos-pro-dki5.netlify.app/';
+const APP_URL = 'https://pos-pro.cmaranaby758.workers.dev/';
 const APP_ORIGIN = new URL(APP_URL).origin;
 
 // Connexion Google : la page de Google ne peut pas s'afficher dans cette fenêtre (elle la refuse).
@@ -135,9 +135,13 @@ if (!gotLock) {
     }
     Menu.setApplicationMenu(null);
 
-    // Aucune autorisation (caméra, micro, localisation...) n'est accordée au site.
-    session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-    session.defaultSession.setPermissionCheckHandler(() => false);
+    // Seule la caméra (scan des codes-barres) est autorisée, et uniquement pour le site POS Pro.
+    // Micro, localisation, etc. restent refusés.
+    const cameraOnly = (permission, origin) => permission === 'media' && typeof origin === 'string' && origin.startsWith(APP_ORIGIN);
+    session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => {
+      callback(cameraOnly(permission, details?.requestingUrl || contents.getURL()) && !(details?.mediaTypes || []).includes('audio'));
+    });
+    session.defaultSession.setPermissionCheckHandler((_contents, permission, requestingOrigin) => cameraOnly(permission, requestingOrigin));
 
     createWindow();
     app.on('activate', () => {
